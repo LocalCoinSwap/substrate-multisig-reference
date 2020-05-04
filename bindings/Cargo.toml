@@ -1,0 +1,15 @@
+[package]
+name = "wasm-crypto"
+version = "0.1.0"
+edition = "2018"
+
+[dependencies]
+"schnorrkel" = "0.9.1"
+
+[lib]
+name = "wasm_crypto"
+crate-type = ["cdylib"]
+
+[dependencies.pyo3]
+version = "0.9.2"
+features = ["extension-module"]

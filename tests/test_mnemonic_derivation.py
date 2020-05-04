@@ -2,7 +2,7 @@ import unittest
 
 from substrateinterface.utils.ss58 import ss58_encode
 
-from bindings import schnorpy
+from bindings import wasm_crypto
 
 
 class TestMnemonicDerivation(unittest.TestCase):
@@ -18,7 +18,7 @@ class TestMnemonicDerivation(unittest.TestCase):
             "8852f77f2aea5d2d5808cefa7cd49a3ed0ce1f1aa8ff2564c3cb96cb2510337d"
         )
 
-        keypair = schnorpy.pair_from_seed(bytes.fromhex(seed_from_mnemonic))
+        keypair = wasm_crypto.pair_from_seed(bytes.fromhex(seed_from_mnemonic))
         public_key = keypair[0].hex()
 
         self.assertTrue(public_key == expected_publickey)
