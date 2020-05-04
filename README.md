@@ -6,7 +6,7 @@
 
  - Python 3.8.1 (preferred)
 
-It is suggested to use a `pyenv` to easily manage python versions. Some of the following commands use `pyenv`.
+It is suggested to use a [`pyenv`](https://github.com/pyenv/pyenv-virtualenv) to easily manage python versions. Some of the following commands use `pyenv`.
 
 ### Configure local development setup
 
