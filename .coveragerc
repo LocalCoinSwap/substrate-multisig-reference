@@ -1,0 +1,6 @@
+[run]
+source =
+  ksmref
+
+omit =
+  venv/*
