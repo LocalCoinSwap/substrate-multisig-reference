@@ -1,13 +1,13 @@
 [package]
-name = "wasm-crypto"
+name = "sr25519"
 version = "0.1.0"
 edition = "2018"
 
 [dependencies]
-"schnorrkel" = "0.9.1"
+schnorrkel = "0.9.1"
 
 [lib]
-name = "wasm_crypto"
+name = "sr25519"
 crate-type = ["cdylib"]
 
 [dependencies.pyo3]

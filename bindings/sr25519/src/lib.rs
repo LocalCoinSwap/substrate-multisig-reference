@@ -8,19 +8,11 @@ pub struct Seed([u8; 32]);
 pub struct Keypair([u8; 32], [u8; 64]);
 
 #[pyfunction]
-fn pair_from_seed(seed: Seed) -> PyResult<Keypair> {
+pub fn pair_from_seed(seed: Seed) -> PyResult<Keypair> {
     let k = MiniSecretKey::from_bytes(&seed.0).expect("32 bytes can always build a key; qed");
     let kp = k.expand_to_keypair(ExpansionMode::Ed25519);
 
     Ok(Keypair(kp.public.to_bytes(), kp.secret.to_bytes()))
-}
-
-/// This module is a python module implemented in Rust.
-#[pymodule]
-fn wasm_crypto(_py: Python, m: &PyModule) -> PyResult<()> {
-    m.add_wrapped(wrap_pyfunction!(pair_from_seed))?;
-
-    Ok(())
 }
 
 impl<'a> FromPyObject<'a> for Seed {
@@ -49,4 +41,12 @@ impl IntoPy<PyObject> for Keypair {
 
         PyTuple::new(py, vec![secret, public]).into_py(py)
     }
+}
+
+/// This module is a python module implemented in Rust.
+#[pymodule]
+fn sr25519(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
+    m.add_wrapped(wrap_pyfunction!(pair_from_seed))?;
+
+    Ok(())
 }

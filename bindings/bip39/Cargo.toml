@@ -1,0 +1,18 @@
+[package]
+name = "bip39"
+version = "0.1.0"
+edition = "2018"
+
+[dependencies]
+hmac = "0.7.0"
+pbkdf2 = { version = "0.3.0", default-features = false }
+sha2 = "0.8.0"
+tiny-bip39 = { version = "0.6.2", default-features = false }
+
+[lib]
+name = "bip39"
+crate-type = ["cdylib"]
+
+[dependencies.pyo3]
+version = "0.9.2"
+features = ["extension-module"]
