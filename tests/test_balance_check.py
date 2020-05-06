@@ -23,4 +23,4 @@ class TestBalanceCheck(unittest.TestCase):
         )
         print(account_data["result"]["data"]["free"])
         free_balance = account_data["result"]["data"]["free"]
-        self.assertTrue(free_balance == 22000000000,)
+        self.assertEqual(free_balance, 22000000000)
