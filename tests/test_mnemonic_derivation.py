@@ -83,6 +83,16 @@ class TestTradeParticipentsMnemonics(unittest.TestCase):
         seller_details = decompose_seed(mnemonic_to_seed(seller_mnemonic))
         admin_details = decompose_seed(mnemonic_to_seed(admin_mnemonic))
 
+        self.assertEqual(
+            buyer_details[0], "CdVuGwX71W4oRbXHsLuLQxNPns23rnSSiZwZPN4etWf6XYo"
+        )
+        self.assertEqual(
+            seller_details[0], "J9aQobenjZjwWtU2MsnYdGomvcYbgauCnBeb8xGrcqznvJc"
+        )
+        self.assertEqual(
+            admin_details[0], "HvqnQxDQbi3LL2URh7WQfcmi8b2ZWfBhu7TEDmyyn5VK8e2"
+        )
+
         print("\n\nBUYER")
         print_stats(buyer_details)
         print("SELLER")
