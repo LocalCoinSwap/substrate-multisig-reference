@@ -20,7 +20,7 @@ class TestMnemonicFromPolkadotJSDerivation(unittest.TestCase):
             "3f686928bda5b57a0992c999aea74d" "65f844be234686871a2ddc6b003d586786"
         )
 
-        self.assertTrue(seed == seed_from_mnemonic)
+        self.assertEqual(seed, seed_from_mnemonic)
 
         expected_publickey = (
             "8852f77f2aea5d2d5808cefa7cd49a3ed" "0ce1f1aa8ff2564c3cb96cb2510337d"
@@ -29,13 +29,13 @@ class TestMnemonicFromPolkadotJSDerivation(unittest.TestCase):
         keypair = sr25519.pair_from_seed(bytes.fromhex(seed_from_mnemonic))
         public_key = keypair[0].hex()
 
-        self.assertTrue(public_key == expected_publickey)
+        self.assertEqual(public_key, expected_publickey)
 
         expected_address = "Ff4gBd7WcHgsNVhr5HGPQXQx4PzPHGtHdNVaCRK5d5KeMHh"
 
         address = ss58_encode(keypair[0], 2)
 
-        self.assertTrue(address == expected_address)
+        self.assertEqual(address, expected_address)
 
 
 class TestTradeParticipentsMnemonics(unittest.TestCase):

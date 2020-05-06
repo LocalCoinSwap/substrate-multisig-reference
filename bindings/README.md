@@ -10,11 +10,6 @@ source $HOME/.cargo/env
 rustup install nightly
 ```
 
-# Build from source with nightly release:
-```
-cargo +nightly build --release
-```
-
 # Automatically build and move target file
 ```
 ./build.sh
