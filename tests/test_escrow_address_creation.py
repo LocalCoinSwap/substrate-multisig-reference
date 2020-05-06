@@ -25,6 +25,9 @@ class TestEscrowAddressCreation(unittest.TestCase):
         trade_addresses = sorted([buyer_id, seller_id, admin_id])
 
         escrow_addr = multisig.multi_account_id(trade_addresses, 2)
-
         escrow_addr = binascii.hexlify(bytearray(escrow_addr)).decode("ascii")
-        print(ss58_encode(escrow_addr, 2))
+
+        # This address was manually generated from the Polkadot UI app
+        expected_address = "HFXXfXavDuKhLLBhFQTat2aaRQ5CMMw9mwswHzWi76m6iLt"
+
+        self.assertEqual(ss58_encode(escrow_addr, 2), expected_address)
