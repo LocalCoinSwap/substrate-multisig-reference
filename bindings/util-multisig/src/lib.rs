@@ -2,8 +2,6 @@ use pyo3::types::{PyAny, PyList, PyBytes};
 use pyo3::prelude::*;
 use pyo3::{wrap_pyfunction, FromPyObject};
 
-mod tests;
-
 use blake2_rfc;
 use codec::{Encode};
 
