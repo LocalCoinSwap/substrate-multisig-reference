@@ -29,3 +29,5 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
 else [[ "$OSTYPE" == "linux-gnu"* ]];
   mv bindings/util-multisig/target/release/libmultisig.so ./bindings/$MODULE_NAME
 fi
+
+pytest -v -s

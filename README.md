@@ -29,3 +29,8 @@ Before making changes, let's ensure tests run successfully on local.
    - `coverage run -m pytest -v`
  - Show report in terminal
    - `coverage report -m`
+
+### Compiling Rust bindings (and auto-run tests afterwards)
+```
+./build.sh
+```
