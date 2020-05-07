@@ -10,7 +10,5 @@ source $HOME/.cargo/env
 rustup install nightly
 ```
 
-# Automatically build and move target file
-```
-./build.sh
-```
+# You can now compile things manually if you wish, but checkout the main
+#  readme for the auto-compile script

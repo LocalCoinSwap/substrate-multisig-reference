@@ -17,13 +17,13 @@ class TestMnemonicFromPolkadotJSDerivation(unittest.TestCase):
         seed = binascii.hexlify(bytearray(seed_array)).decode("ascii")
 
         seed_from_mnemonic = (
-            "3f686928bda5b57a0992c999aea74d" "65f844be234686871a2ddc6b003d586786"
+            "3f686928bda5b57a0992c999aea74d65f844be234686871a2ddc6b003d586786"
         )
 
         self.assertEqual(seed, seed_from_mnemonic)
 
         expected_publickey = (
-            "8852f77f2aea5d2d5808cefa7cd49a3ed" "0ce1f1aa8ff2564c3cb96cb2510337d"
+            "8852f77f2aea5d2d5808cefa7cd49a3ed0ce1f1aa8ff2564c3cb96cb2510337d"
         )
 
         keypair = sr25519.pair_from_seed(bytes.fromhex(seed_from_mnemonic))
@@ -79,9 +79,25 @@ class TestTradeParticipentsMnemonics(unittest.TestCase):
                 f"\n[PRIVATE KEY] {stats[2]}\n"
             )
 
+        # These are useful to print in case you want to manually insert
+        #  the addresses into the Polkadot UI app
+        print("\nBUYER SEED", mnemonic_to_seed(buyer_mnemonic))
+        print("SELLER SEED", mnemonic_to_seed(seller_mnemonic))
+        print("ADMIN SEED", mnemonic_to_seed(admin_mnemonic))
+
         buyer_details = decompose_seed(mnemonic_to_seed(buyer_mnemonic))
         seller_details = decompose_seed(mnemonic_to_seed(seller_mnemonic))
         admin_details = decompose_seed(mnemonic_to_seed(admin_mnemonic))
+
+        self.assertEqual(
+            buyer_details[0], "CdVuGwX71W4oRbXHsLuLQxNPns23rnSSiZwZPN4etWf6XYo"
+        )
+        self.assertEqual(
+            seller_details[0], "J9aQobenjZjwWtU2MsnYdGomvcYbgauCnBeb8xGrcqznvJc"
+        )
+        self.assertEqual(
+            admin_details[0], "HvqnQxDQbi3LL2URh7WQfcmi8b2ZWfBhu7TEDmyyn5VK8e2"
+        )
 
         print("\n\nBUYER")
         print_stats(buyer_details)
