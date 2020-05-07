@@ -5,7 +5,6 @@ repos:
         -   id: check-yaml
         -   id: check-merge-conflict
         -   id: end-of-file-fixer
-        -   id: pretty-format-json
         -   id: requirements-txt-fixer
     -   repo: https://github.com/psf/black
         rev: stable
