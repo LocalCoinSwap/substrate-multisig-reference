@@ -4,11 +4,16 @@
   "main": "index.js",
   "scripts": {
     "build": "rimraf dist/ && babel ./ --out-dir dist/ --ignore ./node_modules,./.babelrc,./package.json,./npm-debug.log --copy-files",
-    "start": "npm run build && node dist/index.js"
+    "standard_trade": "npm run build && node dist/standard_trade.js",
+    "funds_back_to_seller": "npm run build && node dist/funds_back_to_seller.js",
+    "funds_dispute_to_buyer": "npm run build && node dist/funds_dispute_to_buyer.js"
   },
   "license": "MIT",
   "dependencies": {
-    "@polkadot/api": "^1.13.1"
+    "@polkadot/api": "^1.13.1",
+    "@polkadot/keyring": "^2.9.1",
+    "@polkadot/util-crypto": "^2.9.1",
+    "dotenv": "^8.2.0"
   },
   "devDependencies": {
     "babel-cli": "^6.26.0",

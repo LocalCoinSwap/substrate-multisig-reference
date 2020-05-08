@@ -34,3 +34,5 @@ Before making changes, let's ensure tests run successfully on local.
 ```
 ./build.sh
 ```
+
+# Note: don't use any of the addresses in this repo with funds you care about, as the private keys are public knowledge
