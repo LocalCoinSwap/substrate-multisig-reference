@@ -5,12 +5,8 @@
   "scripts": {
     "build": "rimraf dist/ && babel ./ --out-dir dist/ --ignore ./node_modules,./.babelrc,./package.json,./npm-debug.log --copy-files",
     "standard_trade": "npm run build && node dist/standard_trade.js",
-    "buyer_cancels": "npm run build && node dist/buyer_cancels.js",
-    "seller_cancels": "npm run build && node dist/seller_cancels.js",
-    "buyer_disputes_wins": "npm run build && node dist/buyer_disputes_wins.js",
-    "buyer_disputes_loses": "npm run build && node dist/buyer_disputes_loses.js",
-    "seller_disputes_wins": "npm run build && node dist/seller_disputes_wins.js",
-    "seller_disputes_loses": "npm run build && node dist/seller_disputes_loses.js"
+    "funds_back_to_seller": "npm run build && node dist/funds_back_to_seller.js",
+    "funds_dispute_to_buyer": "npm run build && node dist/funds_dispute_to_buyer.js"
   },
   "license": "MIT",
   "dependencies": {
