@@ -11,7 +11,15 @@ def get_balance_for_address(address):
 
     Returns:
     --------
-    free_balance - int (in least unit)
+    dict
+
+    Example:
+    {
+        "free": 22000000000,
+        "reserved": 0,
+        "miscFrozen": 0,
+        "feeFrozen": 0,
+    }
     """
 
     substrate = SubstrateInterface(
