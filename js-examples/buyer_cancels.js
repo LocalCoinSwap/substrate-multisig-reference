@@ -7,21 +7,23 @@ const { cryptoWaitReady } = require('@polkadot/util-crypto');
 const { ApiPromise, WsProvider } = require('@polkadot/api');
 const { Keyring } = require('@polkadot/keyring');
 
+import {
+  kusama_node,
+  sellerHexSeed,
+  adminHexSeed,
+  buyerAddress,
+  adminAddress,
+  sellerAddress,
+  escrowAddress,
+  tradeValue,
+} from './config';
+
 // Instantiate the API
-const wsProvider = new WsProvider('wss://kusama-rpc.polkadot.io/');
+const wsProvider = new WsProvider(kusama_node);
 
-// Trade variables
-const sellerHexSeed = '8b3585743475df08238ff09c401ff8639171c9ad2584045f4b23a5e4f5e326f8';
-const adminHexSeed = '2cf02efa64eb4ba75fa2f42f69dcf5548e821f1e852e2b26aa1b09d5eda0065a';
-const buyerAddress = 'CdVuGwX71W4oRbXHsLuLQxNPns23rnSSiZwZPN4etWf6XYo';
-const adminAddress = 'HvqnQxDQbi3LL2URh7WQfcmi8b2ZWfBhu7TEDmyyn5VK8e2';
-const sellerAddress = 'J9aQobenjZjwWtU2MsnYdGomvcYbgauCnBeb8xGrcqznvJc';
-const tradeValue = 25000000000;
-
-// Additional variables for asMulti
+// Default values
 let threshold = 2;
 let timepoint = null;
-
 
 async function sellerFundEscrow () {
   const api = await ApiPromise.create({ provider: wsProvider });
@@ -31,8 +33,6 @@ async function sellerFundEscrow () {
 
   const sellerKey = keyring.addFromSeed(
     Buffer.from(sellerHexSeed, 'hex'));
-
-  const escrowAddress = 'HFXXfXavDuKhLLBhFQTat2aaRQ5CMMw9mwswHzWi76m6iLt';
 
   // Make an escrow funding transaction, waiting for inclusion
   const tx = api.tx.balances.transfer(escrowAddress, tradeValue)
@@ -57,7 +57,7 @@ async function sellerFundEscrow () {
 }
 
 
-async function sellerApproveRelease (signerHexSeed, otherSignatories) {
+async function sellerApprovesCancel (signerHexSeed, otherSignatories) {
     const api = await ApiPromise.create({ provider: wsProvider });
 
     await cryptoWaitReady();
@@ -66,13 +66,12 @@ async function sellerApproveRelease (signerHexSeed, otherSignatories) {
     const signersKey = keyring.addFromSeed(
       Buffer.from(signerHexSeed, 'hex'));
 
-    const baseTransfer = api.tx.balances.transfer(buyerAddress, tradeValue);
+    const baseTransfer = api.tx.balances.transfer(sellerAddress, tradeValue);
     const tx = api.tx.utility.asMulti(threshold, otherSignatories, timepoint, baseTransfer);
   
     const promise = new Promise((resolve, reject) => {
       tx.signAndSend(signersKey, ({ events = [], status }) => {
         console.log(`Current transaction status is ${status.type}`)
-        console.log(`Current transaction status is ${status}`)
         let index;
         let blockHash;
         if (status.isFinalized) {
@@ -100,7 +99,7 @@ async function sellerApproveRelease (signerHexSeed, otherSignatories) {
 }
 
 
-async function adminFinalizeRelease (signerHexSeed, otherSignatories, destAddress, timePoint) {
+async function adminFinalizeCancel (signerHexSeed, otherSignatories, destAddress, timePoint) {
   const api = await ApiPromise.create({ provider: wsProvider });
 
   await cryptoWaitReady();
@@ -136,16 +135,16 @@ async function standardTrade () {
   const hash = await sellerFundEscrow();
   console.log(`event hash ${hash}`);
  
-  const timePoint = await sellerApproveRelease(
+  const timePoint = await sellerApprovesCancel(
     sellerHexSeed,
     [buyerAddress, adminAddress]
   );
   console.log('timePoint', timePoint);
 
-  const release = await adminFinalizeRelease(
+  const release = await adminFinalizeCancel(
     adminHexSeed,
     [buyerAddress, sellerAddress],
-    buyerAddress,
+    sellerAddress,
     timePoint,
   );
 
