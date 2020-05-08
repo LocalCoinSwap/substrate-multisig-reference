@@ -8,7 +8,7 @@ const { ApiPromise, WsProvider } = require('@polkadot/api');
 const { Keyring } = require('@polkadot/keyring');
 
 import {
-  kusama_node,
+  kusamaNode,
   sellerHexSeed,
   adminHexSeed,
   buyerAddress,
@@ -19,7 +19,7 @@ import {
 } from './config';
 
 // Instantiate the API
-const wsProvider = new WsProvider(kusama_node);
+const wsProvider = new WsProvider(kusamaNode);
 
 // Default values
 let threshold = 2;
