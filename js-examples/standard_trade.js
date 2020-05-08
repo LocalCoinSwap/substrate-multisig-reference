@@ -46,7 +46,7 @@ async function sellerFundEscrow () {
         events.forEach(({ phase, event: { data, method, section } }) => {
           console.log(`\t' ${phase}: ${section}.${method}:: ${data}`);
         });
-      
+
         resolve(status.asFinalized);
       }
     });
@@ -62,13 +62,13 @@ async function sellerApproveRelease (signerHexSeed, otherSignatories) {
 
     await cryptoWaitReady();
     const keyring = new Keyring({ type: 'sr25519' });
-    
+
     const signersKey = keyring.addFromSeed(
       Buffer.from(signerHexSeed, 'hex'));
 
     const baseTransfer = api.tx.balances.transfer(buyerAddress, tradeValue);
     const tx = api.tx.utility.asMulti(threshold, otherSignatories, timepoint, baseTransfer);
-  
+
     const promise = new Promise((resolve, reject) => {
       tx.signAndSend(signersKey, ({ events = [], status }) => {
         console.log(`Current transaction status is ${status.type}`)
@@ -86,7 +86,7 @@ async function sellerApproveRelease (signerHexSeed, otherSignatories) {
             }
             console.log('Transaction index', index);
           });
-        
+
           resolve({ index, blockHash });
         }
       });
@@ -104,10 +104,10 @@ async function adminFinalizeRelease (signerHexSeed, otherSignatories, destAddres
 
   await cryptoWaitReady();
   const keyring = new Keyring({ type: 'sr25519' });
-  
+
   const signersKey = keyring.addFromSeed(
     Buffer.from(signerHexSeed, 'hex'));
-  
+
   const baseTransfer = api.tx.balances.transfer(destAddress, tradeValue);
   const tx = api.tx.utility.asMulti(threshold, otherSignatories, timePoint, baseTransfer);
 
@@ -121,22 +121,22 @@ async function adminFinalizeRelease (signerHexSeed, otherSignatories, destAddres
         events.forEach(({ phase, event: { data, method, section } }) => {
           console.log(`\t' ${phase}: ${section}.${method}:: ${data}`);
         });
-      
+
         resolve(`${status.asFinalized}`);
       }
     });
   });
-  
+
   const hash = await promise;
   return hash;
 }
-  
+
 async function standardTrade () {
   console.log('Standard trade example');
 
   const hash = await sellerFundEscrow();
   console.log(`event hash ${hash}`);
- 
+
   const timePoint = await sellerApproveRelease(
     sellerHexSeed,
     [buyerAddress, adminAddress]
