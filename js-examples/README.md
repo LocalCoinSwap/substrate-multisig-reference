@@ -13,7 +13,8 @@
 
 From a blockchain perspective 2, 3, 6, and 8 are identical in terms of the transactions which occur (seller and admin authorise funds back to seller), these scenarios are contained in the funds_back_to_seller example.
 
-From a blockchain perspective 5 and 7 are also identical
+From a blockchain perspective 5 and 7 are also identical, and are contained in the same funds_dispute_to_buyer example. WIP: we will batch these transactions so the buyer does not pay fees.
+
 Note: In scenario 4 nothing happens on the blockchain, and so we do not need an example test either.
 
 To run these tests, (after loading appropriate variables in config), use the following commands:

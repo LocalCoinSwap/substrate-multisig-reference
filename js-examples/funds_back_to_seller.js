@@ -132,7 +132,7 @@ async function adminFinalizeCancel (signerHexSeed, otherSignatories, destAddress
 }
 
 async function standardTrade () {
-  console.log('Buyer cancels example');
+  console.log('Funds back to seller example');
 
   const hash = await sellerFundEscrow();
   console.log(`event hash ${hash}`);
