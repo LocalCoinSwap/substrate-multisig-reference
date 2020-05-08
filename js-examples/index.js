@@ -3,10 +3,10 @@
 /* eslint-disable @typescript-eslint/unbound-method */
 
 // Import the API, Keyring and some utility functions
-import { cryptoWaitReady } from '@polkadot/util-crypto';
+const { cryptoWaitReady } = require('@polkadot/util-crypto');
 const { ApiPromise, WsProvider } = require('@polkadot/api');
 const { Keyring } = require('@polkadot/keyring');
-import { Timepoint } from '@polkadot/types/interfaces';
+const { Timepoint } = require('@polkadot/types/interfaces');
 
 // Instantiate the API
 const wsProvider = new WsProvider('wss://kusama-rpc.polkadot.io/');
@@ -44,7 +44,7 @@ async function fundEscrow () {
 }
 
 
-async function asMulti (signerHexSeed, otherSignatories, message) {
+async function asMulti (signerHexSeed, otherSignatories, message, timepoint) {
     const api = await ApiPromise.create({ provider: wsProvider });
 
     await cryptoWaitReady();
@@ -63,7 +63,7 @@ async function asMulti (signerHexSeed, otherSignatories, message) {
 }
 
 
-async function releaseEscrow (signerHexSeed, otherSignatories) {
+async function releaseEscrow (signerHexSeed, otherSignatories, destAddress, timePoint) {
   const api = await ApiPromise.create({ provider: wsProvider });
 
   await cryptoWaitReady();
@@ -72,7 +72,7 @@ async function releaseEscrow (signerHexSeed, otherSignatories) {
   const signersKey = keyring.addFromSeed(
     Buffer.from(signerHexSeed, 'hex'));
   
-  const baseTransfer = api.tx.balances.transfer(buyerAddress, tradeValue);
+  const baseTransfer = api.tx.balances.transfer(destAddress, tradeValue);
 
   /*
   * NOTE: This is from the docs, there is some tomfoolery required with timepoint
@@ -82,9 +82,12 @@ async function releaseEscrow (signerHexSeed, otherSignatories) {
   * transaction index) of the first approval transaction.
   */
   
+
   // const info = await api.query.utility.multisigs(buyerAddress, baseTransfer.hash);
   // console.log('info', info, baseTransfer.hash);
-  // timepoint = info.unwrap().when;
+  // timepoint1 = info.unwrap().when;
+  // console.log('timepoint1', timepoint1)
+  const timepoint = timePoint;
 
   const tx = api.tx.utility.asMulti(threshold, otherSignatories, timepoint, baseTransfer);
 
@@ -99,14 +102,6 @@ async function standardTrade () {
   await new Promise(resolve => setTimeout(resolve, 10000));
 
   asMulti(
-    sellerHexSeed,
-    [buyerAddress, adminAddress],
-    'AsMulti seller transaction'
-  ).catch(console.error);
-
-  await new Promise(resolve => setTimeout(resolve, 10000));
-
-  asMulti(
     adminHexSeed,
     [buyerAddress, sellerAddress],
     'AsMulti admin transaction'
@@ -114,9 +109,18 @@ async function standardTrade () {
 
   await new Promise(resolve => setTimeout(resolve, 10000));
 
+  asMulti(
+    sellerHexSeed,
+    [buyerAddress, adminAddress],
+    'AsMulti seller transaction'
+  ).catch(console.error);
+
+  await new Promise(resolve => setTimeout(resolve, 10000));
+
   releaseEscrow(
     buyerHexSeed,
-    [adminAddress, sellerAddress]
+    [adminAddress, sellerAddress],
+    buyerAddress,
   ).catch(console.error);
 }
 
