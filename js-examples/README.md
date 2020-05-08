@@ -17,6 +17,15 @@ From a blockchain perspective 5 and 7 are also identical, and are contained in t
 
 Note: In scenario 4 nothing happens on the blockchain, and so we do not need an example test either.
 
+### Create local .env
+
+```
+cd js-examples
+cp .env.local .env
+```
+
+Update the variables in the .env files as you wish.
+
 To run these tests, (after loading appropriate variables in config), use the following commands:
 ```
 yarn standard_trade
