@@ -14,7 +14,6 @@ const wsProvider = new WsProvider('wss://kusama-rpc.polkadot.io/');
 // Trade variables
 const sellerHexSeed = '8b3585743475df08238ff09c401ff8639171c9ad2584045f4b23a5e4f5e326f8';
 const adminHexSeed = '2cf02efa64eb4ba75fa2f42f69dcf5548e821f1e852e2b26aa1b09d5eda0065a';
-const buyerHexSeed = '64c29cbfc0cec793d1c62a5d80261aa8a1c03535379cedbb0601c1f89ad2271e';
 const buyerAddress = 'CdVuGwX71W4oRbXHsLuLQxNPns23rnSSiZwZPN4etWf6XYo';
 const adminAddress = 'HvqnQxDQbi3LL2URh7WQfcmi8b2ZWfBhu7TEDmyyn5VK8e2';
 const sellerAddress = 'J9aQobenjZjwWtU2MsnYdGomvcYbgauCnBeb8xGrcqznvJc';
@@ -25,7 +24,7 @@ let threshold = 2;
 let timepoint = null;
 
 
-async function fundEscrow () {
+async function sellerFundEscrow () {
   const api = await ApiPromise.create({ provider: wsProvider });
 
   await cryptoWaitReady();
@@ -59,7 +58,7 @@ async function fundEscrow () {
 }
 
 
-async function asMulti (signerHexSeed, otherSignatories) {
+async function sellerApproveRelease (signerHexSeed, otherSignatories) {
     const api = await ApiPromise.create({ provider: wsProvider });
 
     await cryptoWaitReady();
@@ -102,7 +101,7 @@ async function asMulti (signerHexSeed, otherSignatories) {
 }
 
 
-async function releaseEscrow (signerHexSeed, otherSignatories, destAddress, timePoint) {
+async function adminFinalizeRelease (signerHexSeed, otherSignatories, destAddress, timePoint) {
   const api = await ApiPromise.create({ provider: wsProvider });
 
   await cryptoWaitReady();
@@ -112,7 +111,6 @@ async function releaseEscrow (signerHexSeed, otherSignatories, destAddress, time
     Buffer.from(signerHexSeed, 'hex'));
   
   const baseTransfer = api.tx.balances.transfer(destAddress, tradeValue);
-  // const initialCall = api.tx.utility.asMulti(threshold, [buyerAddress, adminAddress], null, baseTransfer);
   const tx = api.tx.utility.asMulti(threshold, otherSignatories, timePoint, baseTransfer);
 
   const promise = new Promise((resolve, reject) => {
@@ -136,20 +134,20 @@ async function releaseEscrow (signerHexSeed, otherSignatories, destAddress, time
 }
   
 async function standardTrade () {
-  // const hash = await fundEscrow();
-  // console.log(`event hash ${hash}`);
+  const hash = await sellerFundEscrow();
+  console.log(`event hash ${hash}`);
  
-  //const timePoint = await asMulti(
-  //  sellerHexSeed,
-  //  [buyerAddress, adminAddress]
-  //);
-  //console.log('timePoint', timePoint);
+  const timePoint = await sellerApproveRelease(
+    sellerHexSeed,
+    [buyerAddress, adminAddress]
+  );
+  console.log('timePoint', timePoint);
 
-  const release = await releaseEscrow(
+  const release = await adminFinalizeRelease(
     adminHexSeed,
     [buyerAddress, sellerAddress],
     buyerAddress,
-    { height: 2220362, index: 2 },
+    timePoint,
   );
 
   console.log('release', release);
