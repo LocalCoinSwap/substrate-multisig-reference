@@ -18,7 +18,7 @@ const buyerHexSeed = '64c29cbfc0cec793d1c62a5d80261aa8a1c03535379cedbb0601c1f89a
 const buyerAddress = 'CdVuGwX71W4oRbXHsLuLQxNPns23rnSSiZwZPN4etWf6XYo';
 const adminAddress = 'HvqnQxDQbi3LL2URh7WQfcmi8b2ZWfBhu7TEDmyyn5VK8e2';
 const sellerAddress = 'J9aQobenjZjwWtU2MsnYdGomvcYbgauCnBeb8xGrcqznvJc';
-const tradeValue = 100000000000;
+const tradeValue = 25000000000;
 
 // Additional variables for asMulti
 let threshold = 2;
@@ -68,27 +68,37 @@ async function asMulti (signerHexSeed, otherSignatories) {
     const signersKey = keyring.addFromSeed(
       Buffer.from(signerHexSeed, 'hex'));
 
-    const baseTransfer = api.tx.balances.transfer(buyerAddress, tradeValue)
-    const initialCall = api.tx.utility.asMulti(threshold, otherSignatories, timepoint, baseTransfer);
-    const tx = api.tx.utility.asMulti(threshold, otherSignatories, timepoint, initialCall);
+    const baseTransfer = api.tx.balances.transfer(buyerAddress, tradeValue);
+    const tx = api.tx.utility.asMulti(threshold, otherSignatories, timepoint, baseTransfer);
   
     const promise = new Promise((resolve, reject) => {
       tx.signAndSend(signersKey, ({ events = [], status }) => {
         console.log(`Current transaction status is ${status.type}`)
+        console.log(`Current transaction status is ${status}`)
+        let index;
+        let blockHash;
         if (status.isFinalized) {
           console.log(`Transaction was included at blockHash ${status.asFinalized}`);
-          // Loop through Vec<EventRecord> to display all events
+          blockHash = `${status.asFinalized}`;
+
+          // Loop through Vec<EventRecord> to find the index from the multiSig creation
           events.forEach(({ phase, event: { data, method, section } }) => {
             console.log(`\t' ${phase}: ${section}.${method}:: ${data}`);
+            if (`${method}` === 'NewMultisig') {
+              index = parseInt(phase._raw, 10);
+            }
+            console.log('Transaction index', index);
           });
         
-          resolve(status.asFinalized);
+          resolve({ index, blockHash });
         }
       });
     });
 
-    const hash = await promise;
-    return hash;
+    const { index, blockHash } = await promise;
+    const signedBlock = await api.rpc.chain.getBlock(blockHash);
+    const height = parseInt(signedBlock.block.header.number, 10)
+    return { height, index };
 }
 
 
@@ -102,34 +112,47 @@ async function releaseEscrow (signerHexSeed, otherSignatories, destAddress, time
     Buffer.from(signerHexSeed, 'hex'));
   
   const baseTransfer = api.tx.balances.transfer(destAddress, tradeValue);
-
+  // const initialCall = api.tx.utility.asMulti(threshold, [buyerAddress, adminAddress], null, baseTransfer);
   const tx = api.tx.utility.asMulti(threshold, otherSignatories, timePoint, baseTransfer);
 
-  const hash = await tx.signAndSend(signersKey);
+  const promise = new Promise((resolve, reject) => {
+    tx.signAndSend(signersKey, ({ events = [], status }) => {
+      console.log(`Current transaction status is ${status.type}`)
+      if (status.isFinalized) {
+        console.log(`Transaction was included at blockHash ${status.asFinalized}`);
 
-  console.log('Release escrow transfer sent with hash', hash.toHex());
+        // Loop through Vec<EventRecord> to display all events
+        events.forEach(({ phase, event: { data, method, section } }) => {
+          console.log(`\t' ${phase}: ${section}.${method}:: ${data}`);
+        });
+      
+        resolve(`${status.asFinalized}`);
+      }
+    });
+  });
+  
+  const hash = await promise;
+  return hash;
 }
   
 async function standardTrade () {
-  //const hash = await fundEscrow();
-  //console.log(`event hash ${hash}`);
+  // const hash = await fundEscrow();
+  // console.log(`event hash ${hash}`);
+ 
+  //const timePoint = await asMulti(
+  //  sellerHexSeed,
+  //  [buyerAddress, adminAddress]
+  //);
+  //console.log('timePoint', timePoint);
 
-  const timePoint = await asMulti(
-    sellerHexSeed,
-    [buyerAddress, adminAddress]
+  const release = await releaseEscrow(
+    adminHexSeed,
+    [buyerAddress, sellerAddress],
+    buyerAddress,
+    { height: 2220362, index: 2 },
   );
 
-  console.log('Timepoint', timePoint);
-
-  //releaseEscrow(
-  //  adminHexSeed,
-  //  [buyerAddress, sellerAddress],
-  //  buyerAddress,
-  //  {
-  //    height: 2210077,
-  //    index: 3
-  //  },
-  //).catch(console.error);
+  console.log('release', release);
 }
 
 standardTrade();
