@@ -6,7 +6,6 @@
 const { cryptoWaitReady } = require('@polkadot/util-crypto');
 const { ApiPromise, WsProvider } = require('@polkadot/api');
 const { Keyring } = require('@polkadot/keyring');
-const { Timepoint } = require('@polkadot/types/interfaces');
 
 // Instantiate the API
 const wsProvider = new WsProvider('wss://kusama-rpc.polkadot.io/');
