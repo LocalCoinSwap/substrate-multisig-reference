@@ -132,6 +132,8 @@ async function adminFinalizeRelease (signerHexSeed, otherSignatories, destAddres
 }
   
 async function standardTrade () {
+  console.log('Standard trade example');
+
   const hash = await sellerFundEscrow();
   console.log(`event hash ${hash}`);
  

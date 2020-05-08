@@ -1,4 +1,4 @@
-export const kusama_node = 'wss://kusama-rpc.polkadot.io/';
+export const kusamaNode = 'wss://kusama-rpc.polkadot.io/';
 
 // Trade variables
 export const sellerHexSeed = '8b3585743475df08238ff09c401ff8639171c9ad2584045f4b23a5e4f5e326f8';
