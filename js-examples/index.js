@@ -35,16 +35,31 @@ async function fundEscrow () {
     Buffer.from(sellerHexSeed, 'hex'));
 
   const escrowAddress = 'HFXXfXavDuKhLLBhFQTat2aaRQ5CMMw9mwswHzWi76m6iLt';
-  const transfer = api.tx.balances.transfer(escrowAddress, tradeValue);
 
-  // Sign and send the transaction using our account
-  const hash = await transfer.signAndSend(sellerKey);
+  // Make an escrow funding transaction, waiting for inclusion
+  const tx = api.tx.balances.transfer(escrowAddress, tradeValue)
 
-  console.log('Fund escrow transfer sent with hash', hash.toHex());
+  const promise = new Promise((resolve, reject) => {
+    tx.signAndSend(sellerKey, ({ events = [], status }) => {
+      console.log(`Current transaction status is ${status.type}`)
+      if (status.isFinalized) {
+        console.log(`Transaction was included at blockHash ${status.asFinalized}`);
+        // Loop through Vec<EventRecord> to display all events
+        events.forEach(({ phase, event: { data, method, section } }) => {
+          console.log(`\t' ${phase}: ${section}.${method}:: ${data}`);
+        });
+      
+        resolve(status.asFinalized);
+      }
+    });
+  });
+
+  const hash = await promise;
+  return hash;
 }
 
 
-async function asMulti (signerHexSeed, otherSignatories, message, timepoint) {
+async function asMulti (signerHexSeed, otherSignatories) {
     const api = await ApiPromise.create({ provider: wsProvider });
 
     await cryptoWaitReady();
@@ -57,9 +72,23 @@ async function asMulti (signerHexSeed, otherSignatories, message, timepoint) {
     const initialCall = api.tx.utility.asMulti(threshold, otherSignatories, timepoint, baseTransfer);
     const tx = api.tx.utility.asMulti(threshold, otherSignatories, timepoint, initialCall);
   
-    const hash = await tx.signAndSend(signersKey);
-  
-    console.log(message, hash.toHex());
+    const promise = new Promise((resolve, reject) => {
+      tx.signAndSend(signersKey, ({ events = [], status }) => {
+        console.log(`Current transaction status is ${status.type}`)
+        if (status.isFinalized) {
+          console.log(`Transaction was included at blockHash ${status.asFinalized}`);
+          // Loop through Vec<EventRecord> to display all events
+          events.forEach(({ phase, event: { data, method, section } }) => {
+            console.log(`\t' ${phase}: ${section}.${method}:: ${data}`);
+          });
+        
+          resolve(status.asFinalized);
+        }
+      });
+    });
+
+    const hash = await promise;
+    return hash;
 }
 
 
@@ -74,22 +103,7 @@ async function releaseEscrow (signerHexSeed, otherSignatories, destAddress, time
   
   const baseTransfer = api.tx.balances.transfer(destAddress, tradeValue);
 
-  /*
-  * NOTE: This is from the docs, there is some tomfoolery required with timepoint
-  *
-  * - `maybe_timepoint`: If this is the first approval, then this must be `None`. If it is
-  * not the first approval, then it must be `Some`, with the timepoint (block number and
-  * transaction index) of the first approval transaction.
-  */
-  
-
-  // const info = await api.query.utility.multisigs(buyerAddress, baseTransfer.hash);
-  // console.log('info', info, baseTransfer.hash);
-  // timepoint1 = info.unwrap().when;
-  // console.log('timepoint1', timepoint1)
-  const timepoint = timePoint;
-
-  const tx = api.tx.utility.asMulti(threshold, otherSignatories, timepoint, baseTransfer);
+  const tx = api.tx.utility.asMulti(threshold, otherSignatories, timePoint, baseTransfer);
 
   const hash = await tx.signAndSend(signersKey);
 
@@ -97,31 +111,25 @@ async function releaseEscrow (signerHexSeed, otherSignatories, destAddress, time
 }
   
 async function standardTrade () {
-  fundEscrow().catch(console.error);
+  //const hash = await fundEscrow();
+  //console.log(`event hash ${hash}`);
 
-  await new Promise(resolve => setTimeout(resolve, 10000));
-
-  asMulti(
-    adminHexSeed,
-    [buyerAddress, sellerAddress],
-    'AsMulti admin transaction'
-  ).catch(console.error);
-
-  await new Promise(resolve => setTimeout(resolve, 10000));
-
-  asMulti(
+  const timePoint = await asMulti(
     sellerHexSeed,
-    [buyerAddress, adminAddress],
-    'AsMulti seller transaction'
-  ).catch(console.error);
+    [buyerAddress, adminAddress]
+  );
 
-  await new Promise(resolve => setTimeout(resolve, 10000));
+  console.log('Timepoint', timePoint);
 
-  releaseEscrow(
-    buyerHexSeed,
-    [adminAddress, sellerAddress],
-    buyerAddress,
-  ).catch(console.error);
+  //releaseEscrow(
+  //  adminHexSeed,
+  //  [buyerAddress, sellerAddress],
+  //  buyerAddress,
+  //  {
+  //    height: 2210077,
+  //    index: 3
+  //  },
+  //).catch(console.error);
 }
 
 standardTrade();
