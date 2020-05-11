@@ -34,19 +34,7 @@ class TestSignAndVerify(unittest.TestCase):
             ("026cb1657e60212226cc8001b9c7eece72e58c5a218138ee93797a8ce38a1317")
         )
 
-        message = base64.b64encode(
-            b"it reaches out it reaches out it reaches out it reaches out"
-            b"One hundred and thirteen times a second, nothing answers and it"
-            b"reaches out. It is not conscious, though parts of it are."
-            b"There are structures within it that were once separate"
-            b" organisms; aboriginal, evolved, and complex. It is designed to"
-            b" improvise, to use what is there and then move on. Good enough "
-            b"is good enough, and so the artifacts are ignored or adapted. "
-            b"The conscious parts try to make sense of the reaching out."
-            b"Try to interpret it."
-        )
-
-        self.assertTrue(sr25519.verify(sig, message, public_key))
+        self.assertTrue(sr25519.verify(sig, self.message, public_key))
 
     def test_fail_verify_invalid_signature(self):
         """Test that a invalid signature will fail to verify"""
