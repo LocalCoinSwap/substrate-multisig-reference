@@ -131,7 +131,9 @@ async function adminFinalizeRelease (signerHexSeed, otherSignatories, destAddres
   const hash = await promise;
   return hash;
 }
-
+// TODO: Automate ordering of signatories to prevent production errors
+// TODO: What to do on failure
+// TODO: Handling batching
 async function standardTrade () {
   const buyerAddress = await deriveAddress(buyerHexSeed);
   const sellerAddress = await deriveAddress(sellerHexSeed);
