@@ -1,5 +1,4 @@
 import base64
-import binascii
 import unittest
 
 from bindings import sr25519
@@ -37,7 +36,7 @@ class TestSignAndVerify(unittest.TestCase):
         sig = sr25519.sign(keypair, message)
 
         public_key = bytes.fromhex(
-            ("026cb1657e60212226cc8001b9c7eec" "e72e58c5a218138ee93797a8ce38a1317")
+            ("026cb1657e60212226cc8001b9c7eece72e58c5a218138ee93797a8ce38a1317")
         )
 
         message = base64.b64encode(
@@ -56,13 +55,13 @@ class TestSignAndVerify(unittest.TestCase):
 
     def test_fail_verify_invalid_signature(self):
         """Test that a invalid signature will fail to verify"""
-        public_key = binascii.unhexlify(
-            b"56a1edb23ba39364bca160b3298cfb7ec8c5272af841c" b"59a7160123a7d705c4d"
+        public_key = bytes.fromhex(
+            "56a1edb23ba39364bca160b3298cfb7ec8c5272af841c59a7160123a7d705c4d"
         )
-        sig = binascii.unhexlify(
-            b"bcb041916b70af03b17ed1c622817ffa50815499db"
-            b"e18895d2f9618fdeadbeef86c69d5a20e04ff66317c7e14d2580dedfc6bbff1"
-            b"4c380569cad5c02719c420c"
+        sig = bytes.fromhex(
+            "bcb041916b70af03b17ed1c622817ffa50815499db"
+            "e18895d2f9618fdeadbeef86c69d5a20e04ff66317c7e14d2580dedfc6bbff1"
+            "4c380569cad5c02719c420c"
         )
 
         message = base64.b64encode(
