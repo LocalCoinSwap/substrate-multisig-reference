@@ -68,14 +68,6 @@ impl IntoPy<PyObject> for Keypair {
     }
 }
 
-// Convert Sig struct to a PyObject
-impl IntoPy<PyObject> for Sig {
-    fn into_py(self, py: Python) -> PyObject {
-        let sig = PyBytes::new(py, &self.0);
-        sig.into_py(py)
-    }
-}
-
 // Convert Python Keypair into Rust
 impl<'a> FromPyObject<'a> for Keypair {
     fn extract(obj: &'a PyAny) -> PyResult<Self> {
@@ -98,6 +90,28 @@ impl<'a> FromPyObject<'a> for Keypair {
                     .as_bytes()[0..64]);
         let keypair = Keypair(public, private);
         Ok(keypair)
+    }
+}
+
+// Convert Sig struct to a PyObject
+impl IntoPy<PyObject> for Sig {
+    fn into_py(self, py: Python) -> PyObject {
+        let sig = PyBytes::new(py, &self.0);
+        sig.into_py(py)
+    }
+}
+
+// Convert a PyBytes object of size 64 to a Sig object
+impl<'a> FromPyObject<'a> for Sig {
+    fn extract(obj: &'a PyAny) -> PyResult<Self> {
+        let signature = obj
+            .downcast::<PyBytes>()
+            .expect("Expected 64 byte signature");
+
+        // Convert bytes to fixed width array
+        let mut fixed: [u8; 64] = [0u8; 64];
+        fixed.clone_from_slice(signature.as_bytes());
+        Ok(Sig(fixed))
     }
 }
 
@@ -132,20 +146,6 @@ impl<'a> FromPyObject<'a> for PubKey {
         let mut fixed: [u8; 32] = Default::default();
         fixed.clone_from_slice(pubkey.as_bytes());
         Ok(PubKey(fixed))
-    }
-}
-
-// Convert a PyBytes object of size 64 to a Sig object
-impl<'a> FromPyObject<'a> for Sig {
-    fn extract(obj: &'a PyAny) -> PyResult<Self> {
-        let signature = obj
-            .downcast::<PyBytes>()
-            .expect("Expected 64 byte signature");
-
-        // Convert bytes to fixed width array
-        let mut fixed: [u8; 64] = [0u8; 64];
-        fixed.clone_from_slice(signature.as_bytes());
-        Ok(Sig(fixed))
     }
 }
 
