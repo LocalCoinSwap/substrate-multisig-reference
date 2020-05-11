@@ -9,7 +9,7 @@ class TestSignAndVerify(unittest.TestCase):
         """Test that we can successfully sign a message"""
         keypair = (
             bytes.fromhex(
-                ("026cb1657e60212226cc8001b9c7eec" "e72e58c5a218138ee93797a8ce38a1317")
+                ("026cb1657e60212226cc8001b9c7eece72e58c5a218" "138ee93797a8ce38a1317")
             ),
             bytes.fromhex(
                 (
