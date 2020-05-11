@@ -7,10 +7,9 @@ from bindings import sr25519
 class TestSignAndVerify(unittest.TestCase):
     def test_sign_and_verify(self):
         """Test that we can successfully sign a message"""
+        pubkey = "026cb1657e60212226cc8001b9c7eece72e58c5a218138ee93797a8ce38a1317"
         keypair = (
-            bytes.fromhex(
-                ("026cb1657e60212226cc8001b9c7eece72e58c5a218" "138ee93797a8ce38a1317")
-            ),
+            bytes.fromhex(pubkey),
             bytes.fromhex(
                 (
                     "dcfcd70c4095ac286c8c6390bece547b6724ff0569"
