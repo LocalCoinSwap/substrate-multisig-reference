@@ -33,6 +33,7 @@ def get_balance_for_address(address):
 
     return account_data.get("result", {}).get("data")
 
+
 def broadcast(signed_exctrinsic):
     """
     Params:
@@ -41,7 +42,7 @@ def broadcast(signed_exctrinsic):
 
     Returns:
     --------
-    Tuple: 
+    Tuple:
         data
 
         success - Bool
@@ -51,13 +52,15 @@ def broadcast(signed_exctrinsic):
 
     """
     substrate = SubstrateInterface(
-    url=settings.NODE_URL, address_type=2, type_registry_preset="kusama",
+        url=settings.NODE_URL, address_type=2, type_registry_preset="kusama",
     )
-    # Need to refactor py-substrate to have rpc_request use something other then run_until_complete 
+    # Need to refactor py-substrate to have rpc_request use something other then run_until_complete
     # (Maybe "run_forever" with a stop condition on failure or complete) to subscribe to all events (not just one)
     # result = substrate.rpc_request(method="author_submitAndWatchExtrinsic", params=[extrinsic])
-    result = substrate.rpc_request(method="author_submitExtrinsic", params=[signed_exctrinsic])
-    if result['result']:
-        return result['result'], True
-    elif result['error']:
-        return result['error'], False
+    result = substrate.rpc_request(
+        method="author_submitExtrinsic", params=[signed_exctrinsic]
+    )
+    if result["result"]:
+        return result["result"], True
+    elif result["error"]:
+        return result["error"], False
