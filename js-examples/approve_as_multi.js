@@ -8,12 +8,19 @@ const { ApiPromise, WsProvider } = require('@polkadot/api');
 const { Keyring } = require('@polkadot/keyring');
 
 import {
+  createSigningPayload,
+  getRegistry,
+  methods,
+  createSignedTx,
+} from '@substrate/txwrapper';
+
+import {
   kusamaNode,
   sellerHexSeed,
   adminHexSeed,
   buyerHexSeed,
   deriveAddress,
-  deriveEscrowAddress,
+  // deriveEscrowAddress,
   tradeValue,
 } from './config';
 
@@ -35,26 +42,68 @@ async function sellerFundEscrow () {
   const sellerKey = keyring.addFromSeed(
     Buffer.from(sellerHexSeed, 'hex'));
 
-  // Make an escrow funding transaction, waiting for inclusion
-  const tx = api.tx.balances.transfer(escrowAddress, tradeValue)
+  const sellerAddress = await deriveAddress(sellerHexSeed)
+
+  // Get generic blockchain and account data
+  const { number, hash} = await api.rpc.chain.getHeader();
+  const genesisHash = await api.rpc.chain.getBlockHash([0]);
+  const { specVersion } = await api.rpc.state.getRuntimeVersion();
+  const { nonce } = await api.query.system.account(sellerAddress);
+  
+  // Parse generic data into JSON value format
+  const latestBlockNumber = parseInt(number._raw, 10);
+  const latestBlockHash = hash.toString('hex');
+  const genesisBlockHash = genesisHash.toString('hex');
+  const spec = parseInt(specVersion, 10);
+
+  // Unpleasant returns
+  const metadataRpc = await api.rpc.state.getMetadata();
+  const registry = getRegistry('Kusama', 'kusama', spec);
+
+  // Unsigned JSON
+  const unsigned = methods.balances.transfer(
+    {
+      value: tradeValue,
+      dest: escrowAddress,
+    },
+    {
+      address: sellerAddress,
+      blockHash: latestBlockHash,
+      blockNumber: latestBlockNumber,
+      eraPeriod: 64,  // Kusama specific variable
+      genesisHash: genesisBlockHash,
+      metadataRpc,
+      nonce,
+      specVersion: spec,
+      tip: 0,
+    },
+    {
+      metadata: metadataRpc,
+      registry,
+    }
+  );
+
+  // Construct the signing payload from an unsigned transaction.
+  const signingPayload = createSigningPayload(unsigned, { registry });
+  console.log(`\nPayload to Sign: ${signingPayload}`);
+
+  // Sign a payload. This operation should be performed on an offline device.
+  const { signature } = registry.createType('ExtrinsicPayload', signingPayload, { version: 4 }).sign(sellerKey);
+  console.log(`\nSignature: ${signature}`);
+
+  // Serialize a signed transaction.
+  const tx = createSignedTx(unsigned, signature, { registry });
+  console.log(`\nTransaction to Submit: ${tx}`);
 
   const promise = new Promise((resolve, reject) => {
-    tx.signAndSend(sellerKey, ({ events = [], status }) => {
-      console.log(`Current transaction status is ${status.type}`)
-      if (status.isFinalized) {
-        console.log(`Transaction was included at blockHash ${status.asFinalized}`);
-        // Loop through Vec<EventRecord> to display all events
-        events.forEach(({ phase, event: { data, method, section } }) => {
-          console.log(`\t' ${phase}: ${section}.${method}:: ${data}`);
-        });
-
-        resolve(status.asFinalized);
-      }
+    api.rpc.author.submitExtrinsic(tx, (x) => {
+      console.log(`Blockchain tx hash for submitted transaction: ${x}`)
+      resolve(x);
     });
   });
 
-  const hash = await promise;
-  return hash;
+  const submittedHash = await promise;
+  return submittedHash;
 }
 
 
@@ -144,21 +193,21 @@ async function standardTrade () {
   const hash = await sellerFundEscrow();
   console.log(`event hash ${hash}`);
 
-  const timePoint = await approveAsMulti(
-    sellerHexSeed,
-    [adminAddress, buyerAddress],
-    buyerAddress,
-  );
-  console.log('timePoint', timePoint);
+  //const timePoint = await approveAsMulti(
+  //  sellerHexSeed,
+  //  [adminAddress, buyerAddress],
+  //  buyerAddress,
+  //);
+  //console.log('timePoint', timePoint);
 
-  const release = await adminFinalizeRelease(
-    adminHexSeed,
-    [buyerAddress, sellerAddress],
-    buyerAddress,
-    timePoint,
-  );
+  //const release = await adminFinalizeRelease(
+  //  adminHexSeed,
+  //  [buyerAddress, sellerAddress],
+  //  buyerAddress,
+  //  timePoint,
+  //);
 
-  console.log('release', release);
+  //console.log('release', release);
   process.exit();
 }
 
