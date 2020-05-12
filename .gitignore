@@ -6,6 +6,8 @@ Cargo.lock
 node_modules/
 dist/
 
+.so
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
