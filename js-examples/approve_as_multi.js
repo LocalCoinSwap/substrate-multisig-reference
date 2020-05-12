@@ -7,6 +7,7 @@ const { cryptoWaitReady } = require('@polkadot/util-crypto');
 const { ApiPromise, WsProvider } = require('@polkadot/api');
 const { Keyring } = require('@polkadot/keyring');
 
+
 import {
   createSigningPayload,
   getRegistry,
@@ -56,8 +57,10 @@ async function sellerFundEscrow () {
   const genesisBlockHash = genesisHash.toString('hex');
   const spec = parseInt(specVersion, 10);
 
-  // Unpleasant returns
+  // Returns huge away of data about the blockchain
   const metadataRpc = await api.rpc.state.getMetadata();
+
+  // Appears to give an object with functions relevant to the chain
   const registry = getRegistry('Kusama', 'kusama', spec);
 
   // Unsigned JSON
@@ -84,8 +87,8 @@ async function sellerFundEscrow () {
   );
 
   // Construct the signing payload from an unsigned transaction.
-  const signingPayload = createSigningPayload(unsigned, { registry });
-  console.log(`\nPayload to Sign: ${signingPayload}`);
+  const signingPayload = registry.createType('ExtrinsicPayload', unsigned, { version: unsigned.version }).toHex();
+  console.log(`\nB: Payload to Sign: ${signingPayload}`);
 
   // Sign a payload. This operation should be performed on an offline device.
   const { signature } = registry.createType('ExtrinsicPayload', signingPayload, { version: 4 }).sign(sellerKey);
@@ -180,9 +183,8 @@ async function adminFinalizeRelease (signerHexSeed, otherSignatories, destAddres
   const hash = await promise;
   return hash;
 }
+
 // TODO: Automate ordering of signatories to prevent production errors
-// TODO: What to do on failure
-// TODO: Handling batching
 async function standardTrade () {
   const buyerAddress = await deriveAddress(buyerHexSeed);
   const sellerAddress = await deriveAddress(sellerHexSeed);
@@ -193,21 +195,21 @@ async function standardTrade () {
   const hash = await sellerFundEscrow();
   console.log(`event hash ${hash}`);
 
-  //const timePoint = await approveAsMulti(
-  //  sellerHexSeed,
-  //  [adminAddress, buyerAddress],
-  //  buyerAddress,
-  //);
-  //console.log('timePoint', timePoint);
+  const timePoint = await approveAsMulti(
+    sellerHexSeed,
+    [adminAddress, buyerAddress],
+    buyerAddress,
+  );
+  console.log('timePoint', timePoint);
 
-  //const release = await adminFinalizeRelease(
-  //  adminHexSeed,
-  //  [buyerAddress, sellerAddress],
-  //  buyerAddress,
-  //  timePoint,
-  //);
+  const release = await adminFinalizeRelease(
+    adminHexSeed,
+    [buyerAddress, sellerAddress],
+    buyerAddress,
+    timePoint,
+  );
 
-  //console.log('release', release);
+  console.log('release', release);
   process.exit();
 }
 
