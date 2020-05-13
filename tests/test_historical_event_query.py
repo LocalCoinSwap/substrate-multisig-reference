@@ -47,3 +47,136 @@ class TestHistoricalEventQuery(unittest.TestCase):
 
         self.assertEqual(result, expected_result)
         print("result", result)
+
+        # Do it with py-substrate
+        event_info = substrate.get_runtime_state(
+            module="System", storage_function="Events", block_hash=test_block
+        ).get("result")
+
+        expected_event_info = [
+            {
+                "phase": 0,
+                "extrinsic_idx": 0,
+                "type": "0000",
+                "module_id": "System",
+                "event_id": "ExtrinsicSuccess",
+                "params": [
+                    {
+                        "type": "DispatchInfo",
+                        "value": {
+                            "weight": 159000000,
+                            "class": "Mandatory",
+                            "paysFee": False,
+                        },
+                        "valueRaw": "",
+                    }
+                ],
+                "topics": [],
+                "event_idx": 0,
+            },
+            {
+                "phase": 0,
+                "extrinsic_idx": 1,
+                "type": "0000",
+                "module_id": "System",
+                "event_id": "ExtrinsicSuccess",
+                "params": [
+                    {
+                        "type": "DispatchInfo",
+                        "value": {
+                            "weight": 1000000000,
+                            "class": "Mandatory",
+                            "paysFee": False,
+                        },
+                        "valueRaw": "",
+                    }
+                ],
+                "topics": [],
+                "event_idx": 1,
+            },
+            {
+                "phase": 0,
+                "extrinsic_idx": 2,
+                "type": "1102",
+                "module_id": "Utility",
+                "event_id": "NewMultisig",
+                "params": [
+                    {
+                        "type": "AccountId",
+                        "value": "0xda91521070ef71375c5db41bc7f6276b3048178bd7456322fbced4a756886620",
+                        "valueRaw": "da91521070ef71375c5db41bc7f6276b3048178bd7456322fbced4a756886620",
+                    },
+                    {
+                        "type": "AccountId",
+                        "value": "0xe58625bc778dcd2dd0faaba532be4cdc0a44a5796eacbd6297c8783698d526d8",
+                        "valueRaw": "e58625bc778dcd2dd0faaba532be4cdc0a44a5796eacbd6297c8783698d526d8",
+                    },
+                    {
+                        "type": "CallHash",
+                        "value": "0xf526cf0bfe78fcc5c2d69a44c7b10ca9533cadb95ed94fdcb1da14b50f3a27b0",
+                        "valueRaw": "f526cf0bfe78fcc5c2d69a44c7b10ca9533cadb95ed94fdcb1da14b50f3a27b0",
+                    },
+                ],
+                "topics": [],
+                "event_idx": 2,
+            },
+            {
+                "phase": 0,
+                "extrinsic_idx": 2,
+                "type": "0d06",
+                "module_id": "Treasury",
+                "event_id": "Deposit",
+                "params": [
+                    {
+                        "type": "Balance",
+                        "value": 800000000,
+                        "valueRaw": "0008af2f000000000000000000000000",
+                    }
+                ],
+                "topics": [],
+                "event_idx": 3,
+            },
+            {
+                "phase": 0,
+                "extrinsic_idx": 2,
+                "type": "0204",
+                "module_id": "Balances",
+                "event_id": "Deposit",
+                "params": [
+                    {
+                        "type": "AccountId",
+                        "value": "0x1a7938fede32e1275281b3eee5708706d88444a6dc898a4dec463f1eb298463f",
+                        "valueRaw": "1a7938fede32e1275281b3eee5708706d88444a6dc898a4dec463f1eb298463f",
+                    },
+                    {
+                        "type": "Balance",
+                        "value": 200000000,
+                        "valueRaw": "00c2eb0b000000000000000000000000",
+                    },
+                ],
+                "topics": [],
+                "event_idx": 4,
+            },
+            {
+                "phase": 0,
+                "extrinsic_idx": 2,
+                "type": "0000",
+                "module_id": "System",
+                "event_id": "ExtrinsicSuccess",
+                "params": [
+                    {
+                        "type": "DispatchInfo",
+                        "value": {
+                            "weight": 170240000,
+                            "class": "Normal",
+                            "paysFee": False,
+                        },
+                        "valueRaw": "",
+                    }
+                ],
+                "topics": [],
+                "event_idx": 5,
+            },
+        ]
+
+        self.assertEqual(event_info, expected_event_info)
