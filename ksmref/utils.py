@@ -2,6 +2,11 @@ from substrateinterface import SubstrateInterface
 
 import settings
 
+import asyncio
+import json
+import websockets
+from scalecodec.base import ScaleDecoder, RuntimeConfiguration
+from scalecodec.type_registry import load_type_registry_preset
 
 def get_balance_for_address(address):
     """
@@ -64,3 +69,104 @@ def broadcast(signed_exctrinsic):
         return result["result"], True
     elif result["error"]:
         return result["error"], False
+
+class rpcInterface:
+        def __init__(self, url, address_type=None, type_registry=None, type_registry_preset=None, cache_region=None):
+            """
+            A specialized class in interfacing with a Substrate node.
+
+            Parameters
+            ----------
+            url: the URL to the substrate node, either in format https://127.0.0.1:9933 or wss://127.0.0.1:9944
+            address_type: The address type which account IDs will be SS58-encoded to Substrate addresses. Defaults to 42, for Kusama the address type is 2
+            type_registry: A dict containing the custom type registry in format: {'types': {'customType': 'u32'},..}
+            type_registry_preset: The name of the predefined type registry shipped with the SCALE-codec, e.g. kusama
+            cache_region: a Dogpile cache region as a central store for the metadata cache
+            """
+            self.cache_region = cache_region
+            if type_registry or type_registry_preset:
+
+                RuntimeConfiguration().update_type_registry(load_type_registry_preset("default"))
+
+                if type_registry:
+                    # Load type registries in runtime configuration
+                    RuntimeConfiguration().update_type_registry(type_registry)
+                if type_registry_preset:
+                    # Load type registries in runtime configuration
+                    RuntimeConfiguration().update_type_registry(load_type_registry_preset(type_registry_preset))
+            self.request_id = 1
+            self.url = url
+            self._ws_result = None
+            self.address_type = address_type
+            self.mock_extrinsics = None
+            self._version = None
+            self.default_headers = {
+                'content-type': "application/json",
+                'cache-control': "no-cache"
+            }
+            self.metadata_decoder = None
+            self.runtime_version = None
+            self.block_hash = None
+            self.metadata_cache = {}
+            self.type_registry_cache = {}
+            self.debug = False
+
+        async def ws_request(self, payload):
+            """
+            Internal method to handle the request if url is a websocket address (wss:// or ws://)
+
+            Parameters
+            ----------
+            payload: a dict that contains the JSONRPC payload of the request
+
+            Returns
+            -------
+            This method doesn't return but sets the `_ws_result` object variable with the result
+            """
+            extrinsicUpdates = []
+            async with websockets.connect(
+                    self.url
+            ) as websocket:
+                await websocket.send(json.dumps(payload))
+                ws_result = None
+                while 'finalized' or 'error' not in str(ws_result):
+                    _ws_result = json.loads(await websocket.recv())
+                    '''
+                    if _ws_result['method']['author_extrinsicUpdate']:
+                        ws_result = _ws_result['params']['author_extrinsicUpdate']['result']
+                        print('ws_result', ws_result)
+                    '''
+                    ws_result = _ws_result
+                    extrinsicUpdates.append(ws_result)
+            return extrinsicUpdates
+
+        def rpc_request(self, method, params):
+            """
+            Method that handles the actual RPC request to the Substrate node. The other implemented functions eventually
+            use this method to perform the request.
+
+            Parameters
+            ----------
+            method: method of the JSONRPC request
+            params: a list containing the parameters of the JSONRPC request
+
+            Returns
+            -------
+            a dict with the parsed result of the request.
+            """
+            # Assumes wss conection
+            '''
+            substrate = SubstrateInterface(
+                url=NODE_URL, address_type=2, type_registry_preset="kusama",
+            )
+            '''
+            payload = {
+                "jsonrpc": "2.0",
+                "method": method,
+                "params": params,
+                "id": self.request_id
+            }
+            extrinsic_update_data = asyncio.get_event_loop().run_until_complete(self.ws_request(payload))
+            json_body = self._ws_result
+
+            return json_body, extrinsic_update_data
