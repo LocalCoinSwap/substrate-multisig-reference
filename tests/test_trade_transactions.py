@@ -13,21 +13,53 @@ from bindings import sr25519
 substrate = SubstrateInterface(
     url=settings.NODE_URL, address_type=2, type_registry_preset="kusama"
 )
-escrow_address = settings.escrow_address
-trade_value = settings.trade_value
 seller_keypair = sr25519.pair_from_seed(bytes.fromhex(settings.seller_hexseed))
 buyer_keypair = sr25519.pair_from_seed(bytes.fromhex(settings.buyer_hexseed))
 admin_keypair = sr25519.pair_from_seed(bytes.fromhex(settings.admin_hexseed))
 
 
-class TestSimpleSend(unittest.TestCase):
-    def test_simple_send(self):
-        # Key derivations for test
-        seller_priv = seller_keypair[1].hex()
-        seller_address = ss58_encode(seller_keypair[0], 2)
-        seller_pub = ss58_decode(seller_address)
+class TestMultiSignatureTrade(unittest.TestCase):
+    """
+    Demonstrate a 3 transaction typical trade.
+
+    1. Seller places funds in escrow address (multisig)
+    2. Seller authorises release to buyer after being paid in fiat
+    3. Admin finalises release to buyer
+    """
+
+    def setUp(self):
+        self.buyer_address = ss58_encode(buyer_keypair[0], 2)
+        self.seller_address = ss58_encode(seller_keypair[0], 2)
+        self.admin_address = ss58_encode(admin_keypair[0], 2)
+        self.seller_priv = seller_keypair[1].hex()
+        self.seller_pub = ss58_decode(self.seller_address)
+        self.admin_priv = admin_keypair[1].hex()
+        self.admin_pub = ss58_decode(self.admin_address)
 
         substrate.init_runtime(block_hash=None)
+
+        # Prepare the inner call as we will reuse it, lets not write code twice
+        self.inner_call = ScaleDecoder.get_decoder_class(
+            "Call", metadata=substrate.metadata_decoder
+        )
+
+        self.inner_call.encode(
+            {
+                "call_module": "Balances",
+                "call_function": "transfer",
+                "call_args": {
+                    "dest": self.buyer_address,
+                    "value": settings.trade_value,
+                },
+            }
+        )
+
+        # Figure out how to set these automatically
+        self.multi_tx_blocknum = 2290447
+        self.multi_tx_index = 2
+
+    def test_a_seller_fund_escrow(self):
+        print("Seller places funds into escrow")
 
         call = ScaleDecoder.get_decoder_class(
             "Call", metadata=substrate.metadata_decoder
@@ -37,11 +69,16 @@ class TestSimpleSend(unittest.TestCase):
             {
                 "call_module": "Balances",
                 "call_function": "transfer",
-                "call_args": {"dest": escrow_address, "value": trade_value},
+                "call_args": {
+                    "dest": settings.escrow_address,
+                    "value": settings.trade_value,
+                },
             }
         )
 
-        response = substrate.get_runtime_state("System", "Account", [seller_address])
+        response = substrate.get_runtime_state(
+            "System", "Account", [self.seller_address]
+        )
         assert response.get("result")
         nonce = response["result"].get("nonce", 0)
         genesis_hash = substrate.get_block_hash(0)
@@ -71,7 +108,7 @@ class TestSimpleSend(unittest.TestCase):
             data = data.encode()
 
         signature = sr25519.sign(
-            (bytes.fromhex(seller_pub), bytes.fromhex(seller_priv)), data
+            (bytes.fromhex(self.seller_pub), bytes.fromhex(self.seller_priv)), data
         )
 
         signature = "0x{}".format(signature.hex())
@@ -83,7 +120,7 @@ class TestSimpleSend(unittest.TestCase):
 
         extrinsic.encode(
             {
-                "account_id": "0x" + seller_pub,
+                "account_id": "0x" + self.seller_pub,
                 "signature_version": 1,
                 "signature": signature,
                 "call_function": call.value["call_function"],
@@ -106,37 +143,9 @@ class TestSimpleSend(unittest.TestCase):
         print("Extrinsic sent: {}".format(extrinsic_hash))
         """
 
+    def test_b_seller_approve_as_multi(self):
+        print("Seller broadcasts approve as multi")
 
-class TestMultiSigTrade(unittest.TestCase):
-    def setUp(self):
-        self.buyer_address = ss58_encode(buyer_keypair[0], 2)
-        self.seller_address = ss58_encode(seller_keypair[0], 2)
-        self.admin_address = ss58_encode(admin_keypair[0], 2)
-        self.seller_priv = seller_keypair[1].hex()
-        self.seller_pub = ss58_decode(self.seller_address)
-        self.admin_priv = admin_keypair[1].hex()
-        self.admin_pub = ss58_decode(self.admin_address)
-
-        substrate.init_runtime(block_hash=None)
-
-        # Prepare the inner call as we will reuse it, lets not write code twice
-        self.inner_call = ScaleDecoder.get_decoder_class(
-            "Call", metadata=substrate.metadata_decoder
-        )
-
-        self.inner_call.encode(
-            {
-                "call_module": "Balances",
-                "call_function": "transfer",
-                "call_args": {"dest": self.buyer_address, "value": trade_value},
-            }
-        )
-
-        # Figure out how to set these automatically
-        self.multi_tx_blocknum = 2290447
-        self.multi_tx_index = 2
-
-    def test_approve_as_multi(self):
         # Function that hashes call with blake2_256
         def hash_call(call):
             call = bytes.fromhex(str(call.data)[2:])
@@ -232,7 +241,8 @@ class TestMultiSigTrade(unittest.TestCase):
         print("Extrinsic sent: {}".format(extrinsic_hash))
         """
 
-    def test_approve_as_multi(self):
+    def test_c_admin_as_multi(self):
+        print("Admin finalises release of funds")
         outer_call = ScaleDecoder.get_decoder_class(
             "Call", metadata=substrate.metadata_decoder
         )
