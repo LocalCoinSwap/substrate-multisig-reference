@@ -122,28 +122,28 @@ async function approveAsMulti (signerHexSeed, otherSignatories, baseTransferAddr
     const baseTransfer = api.tx.balances.transfer(baseTransferAddress, tradeValue);
     const tx = api.tx.utility.approveAsMulti(threshold, otherSignatories, timepoint, baseTransfer.method.hash);
 
-    const promise = new Promise((resolve, reject) => {
-      tx.signAndSend(signersKey, ({ events = [], status }) => {
-        console.log(`Current transaction status is ${status.type}`)
-        let index;
-        let blockHash;
-        if (status.isFinalized) {
-          console.log(`Transaction was included at blockHash ${status.asFinalized}`);
-          blockHash = `${status.asFinalized}`;
+    // const promise = new Promise((resolve, reject) => {
+    //   tx.signAndSend(signersKey, ({ events = [], status }) => {
+    //     console.log(`Current transaction status is ${status.type}`)
+    //     let index;
+    //     let blockHash;
+    //     if (status.isFinalized) {
+    //       console.log(`Transaction was included at blockHash ${status.asFinalized}`);
+    //       blockHash = `${status.asFinalized}`;
 
-          // Loop through Vec<EventRecord> to find the index from the multiSig creation
-          events.forEach(({ phase, event: { data, method, section } }) => {
-            console.log(`\t' ${phase}: ${section}.${method}:: ${data}`);
-            if (`${method}` === 'NewMultisig') {
-              index = parseInt(phase._raw, 10);
-            }
-            console.log('Transaction index', index);
-          });
+    //       // Loop through Vec<EventRecord> to find the index from the multiSig creation
+    //       events.forEach(({ phase, event: { data, method, section } }) => {
+    //         console.log(`\t' ${phase}: ${section}.${method}:: ${data}`);
+    //         if (`${method}` === 'NewMultisig') {
+    //           index = parseInt(phase._raw, 10);
+    //         }
+    //         console.log('Transaction index', index);
+    //       });
 
-          resolve({ index, blockHash });
-        }
-      });
-    });
+    //       resolve({ index, blockHash });
+    //     }
+    //   });
+    // });
 
     const { index, blockHash } = await promise;
     const signedBlock = await api.rpc.chain.getBlock(blockHash);
@@ -192,8 +192,8 @@ async function standardTrade () {
 
   console.log('approveAsMulti example');
 
-  const hash = await sellerFundEscrow();
-  console.log(`event hash ${hash}`);
+  // const hash = await sellerFundEscrow();
+  // console.log(`event hash ${hash}`);
 
   const timePoint = await approveAsMulti(
     sellerHexSeed,
@@ -202,12 +202,12 @@ async function standardTrade () {
   );
   console.log('timePoint', timePoint);
 
-  const release = await adminFinalizeRelease(
-    adminHexSeed,
-    [buyerAddress, sellerAddress],
-    buyerAddress,
-    timePoint,
-  );
+  //const release = await adminFinalizeRelease(
+  //  adminHexSeed,
+  //  [buyerAddress, sellerAddress],
+  //  buyerAddress,
+  //  timePoint,
+  //);
 
   console.log('release', release);
   process.exit();
