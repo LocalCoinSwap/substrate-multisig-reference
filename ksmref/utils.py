@@ -38,7 +38,7 @@ def get_balance_for_address(address):
     return account_data.get("result", {}).get("data")
 
 
-def rpc_subscription(method, params, request_id, node_url):
+def rpc_subscription(method, params, request_id, node_url, loop_forever=False):
     payload = {
         "jsonrpc": "2.0",
         "method": method,
@@ -63,6 +63,7 @@ def rpc_subscription(method, params, request_id, node_url):
                     and type(result["params"]["result"]) is dict
                     and "finalized" in result["params"]["result"]
                 ):
+                    looping = loop_forever
                     looping = False
 
                 event_number += 1

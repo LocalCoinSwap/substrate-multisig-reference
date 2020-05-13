@@ -135,22 +135,13 @@ class TestMultiSignatureTrade(unittest.TestCase):
 
         self.assertEqual(len(str(extrinsic.data)), 288)
 
+        # Broadcast like this
         response = rpc_subscription(
             "author_submitAndWatchExtrinsic",
             [str(extrinsic.data)],
             substrate.request_id,
             settings.NODE_URL,
         )
-        print(response)
-
-        """
-        # This is how we would broadcast
-        response = substrate.rpc_request(
-            "author_submitExtrinsic", [str(extrinsic.data)]
-        )
-        extrinsic_hash = response["result"]
-        print("Extrinsic sent: {}".format(extrinsic_hash))
-        """
 
     def test_b_seller_approve_as_multi(self):
         print("Seller broadcasts approve as multi")
@@ -240,15 +231,14 @@ class TestMultiSignatureTrade(unittest.TestCase):
             }
         )
 
-        """
-        # This is how we would broadcast
-        response = substrate.rpc_request(
-            "author_submitExtrinsic", [str(extrinsic.data)]
-        )
-        print(response)
-        extrinsic_hash = response["result"]
-        print("Extrinsic sent: {}".format(extrinsic_hash))
-        """
+        # response = rpc_subscription(
+        #     "author_submitAndWatchExtrinsic",
+        #     [str(extrinsic.data)],
+        #     substrate.request_id,
+        #     settings.NODE_URL,
+        #     loop_forever=False
+        # )
+        # print(response)
 
     def test_c_admin_as_multi(self):
         print("Admin finalises release of funds")
@@ -328,12 +318,11 @@ class TestMultiSignatureTrade(unittest.TestCase):
             }
         )
 
-        """
-        # This is how we would broadcast
-        response = substrate.rpc_request(
-            "author_submitExtrinsic", [str(extrinsic.data)]
-        )
-        print(response)
-        extrinsic_hash = response["result"]
-        print("Extrinsic sent: {}".format(extrinsic_hash))
-        """
+        # response = rpc_subscription(
+        #     "author_submitAndWatchExtrinsic",
+        #     [str(extrinsic.data)],
+        #     substrate.request_id,
+        #     settings.NODE_URL,
+        #     loop_forever=True
+        # )
+        # print(response)
