@@ -64,6 +64,7 @@ def rpc_subscription(method, params, request_id, node_url, loop_forever=False):
                     and "finalized" in result["params"]["result"]
                 ):
                     looping = loop_forever
+                    looping = False
 
                 event_number += 1
 
