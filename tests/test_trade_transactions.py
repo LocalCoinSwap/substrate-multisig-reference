@@ -1,8 +1,5 @@
-import asyncio
-import json
 import unittest
 
-import websockets
 from scalecodec.base import ScaleDecoder
 from scalecodec.block import ExtrinsicsDecoder
 from substrateinterface import SubstrateInterface
@@ -12,6 +9,7 @@ from substrateinterface.utils.ss58 import ss58_encode
 
 import settings
 from bindings import sr25519
+from ksmref.utils import rpc_subscription
 
 substrate = SubstrateInterface(
     url=settings.NODE_URL, address_type=2, type_registry_preset="kusama"
@@ -137,40 +135,11 @@ class TestMultiSignatureTrade(unittest.TestCase):
 
         self.assertEqual(len(str(extrinsic.data)), 288)
 
-        def rpc_subscription(method, params):
-            payload = {
-                "jsonrpc": "2.0",
-                "method": method,
-                "params": params,
-                "id": substrate.request_id,
-            }
-            ws_results = {}
-
-            async def ws_request(payload):
-                async with websockets.connect(settings.NODE_URL) as websocket:
-                    await websocket.send(json.dumps(payload))
-                    event_number = 0
-                    looping = True
-                    while looping:
-                        result = json.loads(await websocket.recv())
-                        print("Received from node", result)
-                        ws_results.update({event_number: result})
-
-                        # This is nasty, but nested ifs are worse
-                        if (
-                            "params" in result
-                            and type(result["params"]["result"]) is dict
-                            and "finalized" in result["params"]["result"]
-                        ):
-                            looping = False
-
-                        event_number += 1
-
-            asyncio.get_event_loop().run_until_complete(ws_request(payload))
-            return ws_results
-
         response = rpc_subscription(
-            "author_submitAndWatchExtrinsic", [str(extrinsic.data)]
+            "author_submitAndWatchExtrinsic",
+            [str(extrinsic.data)],
+            substrate.request_id,
+            settings.NODE_URL,
         )
         print(response)
 
