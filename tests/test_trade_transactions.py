@@ -13,8 +13,8 @@ substrate = SubstrateInterface(
 )
 
 
-class TestReferanceTransaction(unittest.TestCase):
-    def test_referance_transaction(self):
+class TestSimpleSend(unittest.TestCase):
+    def test_simple_send(self):
         escrow_address = "HmGLJ6sG34vyBwyQSJWvN8HUByatcisuoyuyDXS4JeUZScm"
         sending_hexseed = (
             "92406e11ce4cccd7fcb7fc5ead07b20535ad5ac65466a0ffce37d786b2c46c4e"
@@ -95,9 +95,18 @@ class TestReferanceTransaction(unittest.TestCase):
             }
         )
 
-        print("extrinsic", extrinsic)
+        self.assertEqual(len(str(extrinsic.data)), 288)
+
+        """
+        # This is how we would broadcast
         response = substrate.rpc_request(
             "author_submitExtrinsic", [str(extrinsic.data)]
         )
         extrinsic_hash = response["result"]
         print("Extrinsic sent: {}".format(extrinsic_hash))
+        """
+
+
+class TestMultiSigTrade(unittest.TestCase):
+    def test_standard_trade(self):
+        pass
