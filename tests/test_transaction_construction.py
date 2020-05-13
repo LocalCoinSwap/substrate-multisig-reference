@@ -16,13 +16,11 @@ substrate = SubstrateInterface(
 class TestReferanceTransaction(unittest.TestCase):
     def test_referance_transaction(self):
         escrow_address = "HmGLJ6sG34vyBwyQSJWvN8HUByatcisuoyuyDXS4JeUZScm"
-        sending_hexseed = (
-            "92406e11ce4cccd7fcb7fc5ead07b20535ad5ac65466a0ffce37d786b2c46c4e"
-        )
+
         tradeValue = 10000000000
 
         # Key derivations for test
-        keypair = sr25519.pair_from_seed(bytes.fromhex(sending_hexseed))
+        keypair = sr25519.pair_from_seed(bytes.fromhex(settings.sending_hexseed))
         sending_priv = keypair[1].hex()
         sending_address = ss58_encode(keypair[0], 2)
         sending_pub = ss58_decode(sending_address)
