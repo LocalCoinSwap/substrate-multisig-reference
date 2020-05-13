@@ -136,12 +136,12 @@ class TestMultiSignatureTrade(unittest.TestCase):
         self.assertEqual(len(str(extrinsic.data)), 288)
 
         # Broadcast like this
-        response = rpc_subscription(
-            "author_submitAndWatchExtrinsic",
-            [str(extrinsic.data)],
-            substrate.request_id,
-            settings.NODE_URL,
-        )
+        # response = rpc_subscription(
+        #     "author_submitAndWatchExtrinsic",
+        #     [str(extrinsic.data)],
+        #     substrate.request_id,
+        #     settings.NODE_URL,
+        # )
 
     def test_b_seller_approve_as_multi(self):
         print("Seller broadcasts approve as multi")
