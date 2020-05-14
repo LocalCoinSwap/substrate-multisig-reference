@@ -38,6 +38,13 @@ def get_balance_for_address(address):
         module="System", storage_function="Account", params=[address], block_hash=block,
     )
 
+    if not account_data.get("result"):
+        return {
+            "free": 0,
+            "reserved": 0,
+            "miscFrozen": 0,
+            "feeFrozen": 0,
+        }
     return account_data.get("result", {}).get("data")
 
 
@@ -71,6 +78,7 @@ def rpc_subscription(method, params, request_id, node_url, loop_forever=False):
             looping = True
             while looping:
                 result = json.loads(await websocket.recv())
+                print("Received from node", result)
                 ws_results.update({event_number: result})
 
                 # This is nasty but nested ifs are worse
