@@ -4,9 +4,7 @@
   "main": "index.js",
   "scripts": {
     "build": "rimraf dist/ && babel ./ --out-dir dist/ --ignore ./node_modules,./.babelrc,./package.json,./npm-debug.log --copy-files",
-    "standard_trade": "npm run build && node dist/standard_trade.js",
-    "funds_back_to_seller": "npm run build && node dist/funds_back_to_seller.js",
-    "funds_dispute_to_buyer": "npm run build && node dist/funds_dispute_to_buyer.js",
+    "test": "jest",
     "approve_as_multi": "npm run build && node dist/approve_as_multi.js"
   },
   "license": "MIT",
@@ -18,8 +16,12 @@
     "dotenv": "^8.2.0"
   },
   "devDependencies": {
+    "@babel/core": "^7.9.6",
+    "@babel/preset-env": "^7.9.6",
     "babel-cli": "^6.26.0",
+    "babel-jest": "^26.0.1",
     "babel-preset-es2015": "^6.24.1",
+    "jest": "^26.0.1",
     "rimraf": "^3.0.2"
   }
 }
