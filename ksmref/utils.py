@@ -97,3 +97,17 @@ def get_time_point(ws_results, extrinsic_hash):
             extrinsic_index = block_extrinsics.index(extrinsic)
     extrinsic_time_point = (block_number, extrinsic_index)
     return extrinsic_time_point
+
+
+def get_extrinsic_events(extrinsic_time_point):
+    substrate = SubstrateInterface(
+        url=settings.NODE_URL, address_type=2, type_registry_preset="kusama",
+    )
+    extrinsic_events = []
+    block_hash = substrate.get_block_hash(extrinsic_time_point[0])
+    block_events = substrate.get_runtime_events(block_hash).get("result")
+    for event in block_events:
+        if event["extrinsic_idx"] == extrinsic_time_point[1]:
+            # Todo, only get required event data
+            extrinsic_events.append(event)
+    return extrinsic_events
