@@ -171,7 +171,9 @@ class TestMultiSignatureTrade(unittest.TestCase):
                 "call_args": {
                     "call_hash": hashed_call,
                     "maybe_timepoint": None,
-                    "other_signatories": [self.admin_address, self.buyer_address],
+                    "other_signatories": sorted(
+                        [self.admin_address, self.buyer_address]
+                    ),
                     "threshold": 2,
                 },
             }
@@ -261,7 +263,6 @@ class TestMultiSignatureTrade(unittest.TestCase):
         outer_call = ScaleDecoder.get_decoder_class(
             "Call", metadata=substrate.metadata_decoder
         )
-
         print("PREV TIMEPOINT: ", extrinsic_time_point)
         outer_call.encode(
             {
@@ -273,10 +274,9 @@ class TestMultiSignatureTrade(unittest.TestCase):
                         "height": extrinsic_time_point[0],
                         "index": extrinsic_time_point[1],
                     },
-                    "other_signatories": [
-                        self.seller_address,
-                        self.buyer_address,
-                    ],  # FIXME: Figure out ordering
+                    "other_signatories": sorted(
+                        [self.buyer_address, self.seller_address]
+                    ),  # IMPORTANT: has to be sorted
                     "threshold": 2,
                 },
             }
