@@ -3,6 +3,7 @@ import json
 
 import websockets
 from substrateinterface import SubstrateInterface
+from substrateinterface.utils.hasher import blake2_256
 
 import settings
 
@@ -70,3 +71,29 @@ def rpc_subscription(method, params, request_id, node_url, loop_forever=False):
 
     asyncio.get_event_loop().run_until_complete(ws_request(payload))
     return ws_results
+
+
+def get_extrinsic_hash(signed_extrinsic):
+    return f"0x{blake2_256(bytes.fromhex(signed_extrinsic[2:]))}"
+
+
+def get_time_point(ws_results, extrinsic_hash):
+    # For now assume last result in ws_results is finalized
+    finalized_block_hash = ws_results[(len(ws_results) - 1)]["params"]["result"][
+        "finalized"
+    ]
+    substrate = SubstrateInterface(
+        url=settings.NODE_URL, address_type=2, type_registry_preset="kusama",
+    )
+    # Need to get extrinsic index
+    block = substrate.get_runtime_block(finalized_block_hash)
+    block_extrinsics = block.get("block").get("extrinsics")
+    block_number = block.get("block").get("header").get("number")
+    for extrinsic in block_extrinsics:
+        if (
+            "extrinsic_hash" in extrinsic.keys()
+            and extrinsic["extrinsic_hash"] == extrinsic_hash[2:]
+        ):
+            extrinsic_index = block_extrinsics.index(extrinsic)
+    extrinsic_time_point = (block_number, extrinsic_index)
+    return extrinsic_time_point
