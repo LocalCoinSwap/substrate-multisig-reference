@@ -1,7 +1,6 @@
 import unittest
 
 from scalecodec.base import ScaleDecoder
-from scalecodec.block import ExtrinsicsDecoder
 from substrateinterface import SubstrateInterface
 from substrateinterface.utils.hasher import blake2_256
 from substrateinterface.utils.ss58 import ss58_decode
@@ -9,6 +8,7 @@ from substrateinterface.utils.ss58 import ss58_encode
 
 import settings
 from bindings import sr25519
+from ksmref import utils
 from ksmref.utils import rpc_subscription
 
 substrate = SubstrateInterface(
@@ -54,10 +54,8 @@ class TestMultiSignatureTrade(unittest.TestCase):
                 },
             }
         )
-
-        # Figure out how to set these automatically
-        self.multi_tx_blocknum = 2290447
-        self.multi_tx_index = 2
+        # Set by get_extrinsic_time_point in test_b_seller_approve_as_multi for test_c_admin_as_multi
+        self.extrinsic_time_point = None
 
     def test_a_seller_fund_escrow(self):
         print("Seller places funds into escrow")
@@ -76,7 +74,6 @@ class TestMultiSignatureTrade(unittest.TestCase):
                 },
             }
         )
-
         response = substrate.get_runtime_state(
             "System", "Account", [self.seller_address]
         )
@@ -135,28 +132,39 @@ class TestMultiSignatureTrade(unittest.TestCase):
 
         self.assertEqual(len(str(extrinsic.data)), 288)
 
+        original_balance = utils.get_balance_for_address(settings.escrow_address).get(
+            "free"
+        )
         # Broadcast like this
-        # response = rpc_subscription(
-        #     "author_submitAndWatchExtrinsic",
-        #     [str(extrinsic.data)],
-        #     substrate.request_id,
-        #     settings.NODE_URL,
-        # )
+        response = rpc_subscription(
+            "author_submitAndWatchExtrinsic",
+            [str(extrinsic.data)],
+            substrate.request_id,
+            settings.NODE_URL,
+        )
+
+        extrinsic_hash = utils.get_extrinsic_hash(str(extrinsic.data))
+        print("extrinsic_hash", extrinsic_hash)
+        extrinsic_time_point = utils.get_time_point(response, extrinsic_hash)
+        print("extrinsic_time_point", extrinsic_time_point)
+        events = utils.get_extrinsic_events(extrinsic_time_point)
+        print(events)
+        self.assertTrue("Deposit" and "ExtrinsicSuccess" in str(events))
+
+        new_balance = utils.get_balance_for_address(settings.escrow_address).get("free")
+
+        self.assertEqual(new_balance, original_balance + settings.trade_value)
 
     def test_b_seller_approve_as_multi(self):
         print("Seller broadcasts approve as multi")
-
+        original_balance = utils.get_balance_for_address(self.buyer_address).get("free")
         # Function that hashes call with blake2_256
+
         def hash_call(call):
             call = bytes.fromhex(str(call.data)[2:])
             return f"0x{blake2_256(call)}"
 
         hashed_call = hash_call(self.inner_call)
-        expected_hash = (
-            "0xf526cf0bfe78fcc5c2d69a44c7b10ca9533cadb95ed94fdcb1da14b50f3a27b0"
-        )
-
-        self.assertEqual(hashed_call, expected_hash)
 
         outer_call = ScaleDecoder.get_decoder_class(
             "Call", metadata=substrate.metadata_decoder
@@ -231,17 +239,28 @@ class TestMultiSignatureTrade(unittest.TestCase):
             }
         )
 
-        # response = rpc_subscription(
-        #     "author_submitAndWatchExtrinsic",
-        #     [str(extrinsic.data)],
-        #     substrate.request_id,
-        #     settings.NODE_URL,
-        #     loop_forever=False
-        # )
-        # print(response)
+        response = rpc_subscription(
+            "author_submitAndWatchExtrinsic",
+            [str(extrinsic.data)],
+            substrate.request_id,
+            settings.NODE_URL,
+            loop_forever=False,
+        )
+
+        extrinsic_hash = utils.get_extrinsic_hash(str(extrinsic.data))
+        print("extrinsic_hash", extrinsic_hash)
+        self.extrinsic_time_point = utils.get_time_point(response, extrinsic_hash)
+        print("extrinsic_time_point", self.extrinsic_time_point)
+        events = utils.get_extrinsic_events(self.extrinsic_time_point)
+        print(events)
+        self.assertTrue("NewMultiSig" and "ExtrinsicSuccess" in str(events))
+        new_balance = utils.get_balance_for_address(self.buyer_address).get("free")
+        # Make sure no funds move to buyer yet
+        self.assertEqual(new_balance, original_balance)
 
     def test_c_admin_as_multi(self):
         print("Admin finalises release of funds")
+        original_balance = utils.get_balance_for_address(self.buyer_address).get("free")
         outer_call = ScaleDecoder.get_decoder_class(
             "Call", metadata=substrate.metadata_decoder
         )
@@ -253,8 +272,8 @@ class TestMultiSignatureTrade(unittest.TestCase):
                 "call_args": {
                     "call": self.inner_call.serialize(),
                     "maybe_timepoint": {
-                        "height": self.multi_tx_blocknum,
-                        "index": self.multi_tx_index,
+                        "height": self.extrinsic_time_point[0],
+                        "index": self.extrinsic_time_point[1],
                     },
                     "other_signatories": [self.buyer_address, self.seller_address],
                     "threshold": 2,
@@ -318,11 +337,22 @@ class TestMultiSignatureTrade(unittest.TestCase):
             }
         )
 
-        # response = rpc_subscription(
-        #     "author_submitAndWatchExtrinsic",
-        #     [str(extrinsic.data)],
-        #     substrate.request_id,
-        #     settings.NODE_URL,
-        #     loop_forever=True
-        # )
-        # print(response)
+        response = rpc_subscription(
+            "author_submitAndWatchExtrinsic",
+            [str(extrinsic.data)],
+            substrate.request_id,
+            settings.NODE_URL,
+            loop_forever=True,
+        )
+
+        extrinsic_hash = utils.get_extrinsic_hash(str(extrinsic.data))
+        print("extrinsic_hash", extrinsic_hash)
+        extrinsic_time_point = utils.get_time_point(response, extrinsic_hash)
+        print("extrinsic_time_point", extrinsic_time_point)
+        events = utils.get_extrinsic_events(extrinsic_time_point)
+        print(events)
+        self.assertTrue("MultiSigExecuted" and "ExtrinsicSuccess" in str(events))
+
+        new_balance = utils.get_balance_for_address(self.buyer_address).get("free")
+
+        self.assertEqual(new_balance, original_balance + settings.trade_value)
