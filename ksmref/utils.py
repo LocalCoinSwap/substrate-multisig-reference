@@ -1,4 +1,5 @@
 import asyncio
+import binascii
 import json
 
 import websockets
@@ -6,6 +7,7 @@ from substrateinterface import SubstrateInterface
 from substrateinterface.utils.hasher import blake2_256
 
 import settings
+from bindings import bip39
 
 
 def get_balance_for_address(address):
@@ -37,6 +39,20 @@ def get_balance_for_address(address):
     )
 
     return account_data.get("result", {}).get("data")
+
+
+def mnemonic_to_seed(mnemonic):
+    """
+    Params:
+    -------
+    mnemonic - str
+
+    Returns:
+    --------
+    seed - str (without hex prefix 0x)
+    """
+    seed_array = bip39.bip39_to_mini_secret(mnemonic, "")
+    return binascii.hexlify(bytearray(seed_array)).decode("ascii")
 
 
 def rpc_subscription(method, params, request_id, node_url, loop_forever=False):
