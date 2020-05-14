@@ -109,5 +109,6 @@ def get_extrinsic_events(extrinsic_time_point):
     for event in block_events:
         if event["extrinsic_idx"] == extrinsic_time_point[1]:
             # Todo, only get required event data
+            # Perhaps just event_id and params?
             extrinsic_events.append(event)
     return extrinsic_events
