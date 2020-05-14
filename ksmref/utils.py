@@ -71,7 +71,6 @@ def rpc_subscription(method, params, request_id, node_url, loop_forever=False):
             looping = True
             while looping:
                 result = json.loads(await websocket.recv())
-                print("Received from node", result)
                 ws_results.update({event_number: result})
 
                 # This is nasty but nested ifs are worse
@@ -80,8 +79,8 @@ def rpc_subscription(method, params, request_id, node_url, loop_forever=False):
                     and type(result["params"]["result"]) is dict
                     and "finalized" in result["params"]["result"]
                 ):
-                    looping = loop_forever
                     looping = False
+                    looping = loop_forever
 
                 event_number += 1
 

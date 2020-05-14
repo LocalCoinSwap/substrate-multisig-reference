@@ -240,7 +240,6 @@ class TestMultiSignatureTrade(unittest.TestCase):
             [str(extrinsic.data)],
             substrate.request_id,
             settings.NODE_URL,
-            loop_forever=False,
         )
 
         extrinsic_hash = utils.get_extrinsic_hash(str(extrinsic.data))
@@ -343,7 +342,6 @@ class TestMultiSignatureTrade(unittest.TestCase):
             [str(extrinsic.data)],
             substrate.request_id,
             settings.NODE_URL,
-            loop_forever=True,
         )
 
         extrinsic_hash = utils.get_extrinsic_hash(str(extrinsic.data))
