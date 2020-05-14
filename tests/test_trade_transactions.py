@@ -54,8 +54,6 @@ class TestMultiSignatureTrade(unittest.TestCase):
                 },
             }
         )
-        # Set by get_extrinsic_time_point in test_b_seller_approve_as_multi for test_c_admin_as_multi
-        self.extrinsic_time_point = None
 
     def test_a_seller_fund_escrow(self):
         print("Seller places funds into escrow")
@@ -132,9 +130,6 @@ class TestMultiSignatureTrade(unittest.TestCase):
 
         self.assertEqual(len(str(extrinsic.data)), 288)
 
-        original_balance = utils.get_balance_for_address(settings.escrow_address).get(
-            "free"
-        )
         # Broadcast like this
         response = rpc_subscription(
             "author_submitAndWatchExtrinsic",
@@ -152,10 +147,9 @@ class TestMultiSignatureTrade(unittest.TestCase):
         self.assertTrue("Deposit" and "ExtrinsicSuccess" in str(events))
 
         new_balance = utils.get_balance_for_address(settings.escrow_address).get("free")
+        self.assertTrue(new_balance >= 0)
 
-        self.assertEqual(new_balance, original_balance + settings.trade_value)
-
-    def test_b_seller_approve_as_multi(self):
+    def test_b_seller_approve_as_multi_and_admin_as_multi(self):
         print("Seller broadcasts approve as multi")
         original_balance = utils.get_balance_for_address(self.buyer_address).get("free")
         # Function that hashes call with blake2_256
@@ -249,22 +243,26 @@ class TestMultiSignatureTrade(unittest.TestCase):
 
         extrinsic_hash = utils.get_extrinsic_hash(str(extrinsic.data))
         print("extrinsic_hash", extrinsic_hash)
-        self.extrinsic_time_point = utils.get_time_point(response, extrinsic_hash)
-        print("extrinsic_time_point", self.extrinsic_time_point)
-        events = utils.get_extrinsic_events(self.extrinsic_time_point)
+        extrinsic_time_point = utils.get_time_point(response, extrinsic_hash)
+        print("extrinsic_time_point", extrinsic_time_point)
+        events = utils.get_extrinsic_events(extrinsic_time_point)
         print(events)
         self.assertTrue("NewMultiSig" and "ExtrinsicSuccess" in str(events))
         new_balance = utils.get_balance_for_address(self.buyer_address).get("free")
         # Make sure no funds move to buyer yet
         self.assertEqual(new_balance, original_balance)
 
-    def test_c_admin_as_multi(self):
+        #############################################################
+        ##       Second Txn: AsMulti by Admin                       #
+        #############################################################
+
         print("Admin finalises release of funds")
         original_balance = utils.get_balance_for_address(self.buyer_address).get("free")
         outer_call = ScaleDecoder.get_decoder_class(
             "Call", metadata=substrate.metadata_decoder
         )
 
+        print("PREV TIMEPOINT: ", extrinsic_time_point)
         outer_call.encode(
             {
                 "call_module": "Utility",
@@ -272,10 +270,13 @@ class TestMultiSignatureTrade(unittest.TestCase):
                 "call_args": {
                     "call": self.inner_call.serialize(),
                     "maybe_timepoint": {
-                        "height": self.extrinsic_time_point[0],
-                        "index": self.extrinsic_time_point[1],
+                        "height": extrinsic_time_point[0],
+                        "index": extrinsic_time_point[1],
                     },
-                    "other_signatories": [self.buyer_address, self.seller_address],
+                    "other_signatories": [
+                        self.seller_address,
+                        self.buyer_address,
+                    ],  # FIXME: Figure out ordering
                     "threshold": 2,
                 },
             }
