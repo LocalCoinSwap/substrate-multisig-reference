@@ -40,14 +40,14 @@ async function sellerFundEscrow () {
 
   const promise = new Promise((resolve, reject) => {
     tx.signAndSend(sellerKey, ({ events = [], status }) => {
-      console.log(`Current transaction status is ${status.type}`)
+      console.debug(`Current transaction status is ${status.type}`)
       if (status.isFinalized) {
-        console.log(`Transaction was included at blockHash ${status.asFinalized}`);
+        console.debug(`Transaction was included at blockHash ${status.asFinalized}`);
         // Loop through Vec<EventRecord> to display all events
         events.forEach(({ phase, event: { data, method, section } }) => {
-          console.log(`\t' ${phase}: ${section}.${method}:: ${data}`);
+          console.debug(`\t' ${phase}: ${section}.${method}:: ${data}`);
         });
-      
+
         resolve(status.asFinalized);
       }
     });
@@ -63,31 +63,31 @@ async function buyerApprovesRelease (signerHexSeed, otherSignatories) {
 
     await cryptoWaitReady();
     const keyring = new Keyring({ type: 'sr25519' });
-    
+
     const signersKey = keyring.addFromSeed(
       Buffer.from(signerHexSeed, 'hex'));
 
     const baseTransfer = api.tx.balances.transfer(buyerAddress, tradeValue);
     const tx = api.tx.utility.asMulti(threshold, otherSignatories, timepoint, baseTransfer);
-  
+
     const promise = new Promise((resolve, reject) => {
       tx.signAndSend(signersKey, ({ events = [], status }) => {
-        console.log(`Current transaction status is ${status.type}`)
+        console.debug(`Current transaction status is ${status.type}`)
         let index;
         let blockHash;
         if (status.isFinalized) {
-          console.log(`Transaction was included at blockHash ${status.asFinalized}`);
+          console.debug(`Transaction was included at blockHash ${status.asFinalized}`);
           blockHash = `${status.asFinalized}`;
 
           // Loop through Vec<EventRecord> to find the index from the multiSig creation
           events.forEach(({ phase, event: { data, method, section } }) => {
-            console.log(`\t' ${phase}: ${section}.${method}:: ${data}`);
+            console.debug(`\t' ${phase}: ${section}.${method}:: ${data}`);
             if (`${method}` === 'NewMultisig') {
               index = parseInt(phase._raw, 10);
             }
-            console.log('Transaction index', index);
+            console.debug('Transaction index', index);
           });
-        
+
           resolve({ index, blockHash });
         }
       });
@@ -105,44 +105,44 @@ async function adminFinalizeRelease (signerHexSeed, otherSignatories, destAddres
 
   await cryptoWaitReady();
   const keyring = new Keyring({ type: 'sr25519' });
-  
+
   const signersKey = keyring.addFromSeed(
     Buffer.from(signerHexSeed, 'hex'));
-  
+
   const baseTransfer = api.tx.balances.transfer(destAddress, tradeValue);
   const tx = api.tx.utility.asMulti(threshold, otherSignatories, timePoint, baseTransfer);
 
   const promise = new Promise((resolve, reject) => {
     tx.signAndSend(signersKey, ({ events = [], status }) => {
-      console.log(`Current transaction status is ${status.type}`)
+      console.debug(`Current transaction status is ${status.type}`)
       if (status.isFinalized) {
-        console.log(`Transaction was included at blockHash ${status.asFinalized}`);
+        console.debug(`Transaction was included at blockHash ${status.asFinalized}`);
 
         // Loop through Vec<EventRecord> to display all events
         events.forEach(({ phase, event: { data, method, section } }) => {
-          console.log(`\t' ${phase}: ${section}.${method}:: ${data}`);
+          console.debug(`\t' ${phase}: ${section}.${method}:: ${data}`);
         });
-      
+
         resolve(`${status.asFinalized}`);
       }
     });
   });
-  
+
   const hash = await promise;
   return hash;
 }
-  
+
 async function standardTrade () {
-  console.log('Funds dispute to buyer example');
+  console.debug('Funds dispute to buyer example');
 
   const hash = await sellerFundEscrow();
-  console.log(`event hash ${hash}`);
- 
+  console.debug(`event hash ${hash}`);
+
   const timePoint = await buyerApprovesRelease(
     buyerHexSeed,
     [adminAddress, sellerAddress]
   );
-  console.log('timePoint', timePoint);
+  console.debug('timePoint', timePoint);
 
   const release = await adminFinalizeRelease(
     adminHexSeed,
@@ -151,7 +151,7 @@ async function standardTrade () {
     timePoint,
   );
 
-  console.log('release', release);
+  console.debug('release', release);
 }
 
 standardTrade();
