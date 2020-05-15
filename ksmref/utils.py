@@ -135,3 +135,13 @@ def get_extrinsic_events(extrinsic_time_point):
             # Perhaps just event_id and params?
             extrinsic_events.append(event)
     return extrinsic_events
+
+
+def get_fee_info(signed_extrinsic):
+    substrate = SubstrateInterface(
+        url=settings.NODE_URL, address_type=2, type_registry_preset="kusama",
+    )
+    fee_info = substrate.rpc_request("payment_queryInfo", [signed_extrinsic],).get(
+        "result"
+    )
+    return fee_info
