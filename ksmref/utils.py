@@ -78,7 +78,7 @@ def rpc_subscription(method, params, request_id, node_url, loop_forever=False):
             looping = True
             while looping:
                 result = json.loads(await websocket.recv())
-                print("Received from node", result)
+                # print("Received from node", result)
                 ws_results.update({event_number: result})
 
                 # This is nasty but nested ifs are worse
@@ -92,6 +92,8 @@ def rpc_subscription(method, params, request_id, node_url, loop_forever=False):
 
                 event_number += 1
 
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
     asyncio.get_event_loop().run_until_complete(ws_request(payload))
     return ws_results
 
