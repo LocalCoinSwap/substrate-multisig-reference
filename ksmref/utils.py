@@ -92,9 +92,7 @@ def rpc_subscription(method, params, request_id, node_url, loop_forever=False):
 
                 event_number += 1
 
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    asyncio.get_event_loop().run_until_complete(ws_request(payload))
+    asyncio.run(ws_request(payload))
     return ws_results
 
 
@@ -147,3 +145,43 @@ def get_fee_info(signed_extrinsic):
         "result"
     )
     return fee_info
+
+
+async def node_rpc_call(method, params, loop_limit=False, *, debug=False):
+    payload = {
+        "jsonrpc": "2.0",
+        "method": method,
+        "params": params,
+        "id": 1,
+    }
+    ws_results = {}
+
+    async def ws_request(payload):
+        async with websockets.connect(settings.NODE_URL) as websocket:
+            await websocket.send(json.dumps(payload))
+            event_number = 0
+            loops = 0
+            looping = True
+            while looping:
+                result = json.loads(await websocket.recv())
+                if debug:
+                    print("Received from server", result)
+                ws_results.update({event_number: result})
+
+                # Kill things immediately for simple requests
+                loops += 1
+                if loop_limit and loop_limit <= loops:
+                    looping = False
+
+                # This is nasty but nested ifs are worse
+                if (
+                    "params" in result
+                    and type(result["params"]["result"]) is dict
+                    and "finalized" in result["params"]["result"]
+                ):
+                    looping = False
+
+                event_number += 1
+
+    await ws_request(payload)
+    return ws_results
