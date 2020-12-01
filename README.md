@@ -1,4 +1,4 @@
-# LocalCoinSwap non-custodial Kusama integration.
+# LocalCoinSwap non-custodial Substrate integration.
 
 ## __Prelude: Peer-to-peer (P2P) vs centralized exchanges__
 
